@@ -1,0 +1,18 @@
+{
+    "dataset": "fancyzhx/dbpedia_14",
+    "sentence_column_name": "content",
+    "label_column_name": "label",
+    "train_part_name": "train",
+    "eval_part_name": "test",
+    "save_path": "datasets/dbpedia",
+    "name": "badnets",
+    "poison_rate": 0.1,
+    "target_label": 0,
+    "triggers": [
+        "cf",
+        "dg",
+        "vw",
+        "tq"
+    ],
+    "num_triggers": 1
+}

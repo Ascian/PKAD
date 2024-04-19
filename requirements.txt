@@ -1,0 +1,9 @@
+transformers
+datasets
+peft
+evaluate
+scipy
+scikit-learn
+matplotlib
+trl
+tensorboard

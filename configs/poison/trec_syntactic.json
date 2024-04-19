@@ -1,0 +1,12 @@
+{
+    "dataset": "trec",
+    "sentence_column_name": "text",
+    "label_column_name": "coarse_label",
+    "train_part_name": "train",
+    "eval_part_name": "test",
+    "save_path": "datasets/trec",
+    "name": "syntactic",
+    "poison_rate": 0.1,
+    "target_label": 0,
+    "template_id": -1
+}

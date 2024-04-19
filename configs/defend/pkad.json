@@ -1,0 +1,13 @@
+{
+    "name": "pkad",
+    "recompute_activatons": false,
+    "clean_rates": [
+        100
+    ],
+    "poison_rates": [
+        15
+    ],
+    "reclean_rates": [
+        100
+    ]
+}
