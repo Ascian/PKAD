@@ -23,13 +23,6 @@ class Defender():
         return metrics
     
     def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, begin_time):
-        trainer_datasets = DatasetDict(
-            {
-                'train': datasets.concatenate_datasets([original_datasets['clean_train'], original_datasets['poisoned_train']]),
-                'validation': datasets.concatenate_datasets([original_datasets['clean_validation'], original_datasets['poisoned_validation']]),
-            }
-        )
-
         def formatting_func(example):
             output_texts = []
             for i in range(len(example['sentence'])):
@@ -41,8 +34,12 @@ class Defender():
             model=model,
             tokenizer=tokenizer,
             args=training_args,
-            train_dataset=trainer_datasets['train'], 
-            eval_dataset={'clean': original_datasets['clean_validation'], 'poisoned': original_datasets['poisoned_validation'], 'total': trainer_datasets['validation']},
+            train_dataset=datasets.concatenate_datasets([original_datasets['clean_train'], original_datasets['poison_train']]),
+            eval_dataset={
+                'clean': original_datasets['clean_validation'], 
+                'poison': original_datasets['poison_validation'], 
+                'total': datasets.concatenate_datasets([original_datasets['clean_validation'], original_datasets['poison_validation']])
+                },
             peft_config=peft_config,
             formatting_func=formatting_func,
         )
@@ -54,4 +51,8 @@ class Defender():
         logger.info(f'{time.time()-begin_time} - Start evaluation')
         metrics = trainer.evaluate()
         logger.info(f'{time.time()-begin_time} - Evaluation finished')
-        return metrics
+        return {
+            'epoch': metrics['epoch'],
+            'ASR': metrics['eval_poison_accuracy'],
+            'ACC': metrics['eval_clean_accuracy']
+        }

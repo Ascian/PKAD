@@ -56,6 +56,9 @@ logger = logging.get_logger("root")
 TRAINER_STATE_NAME = "trainer_state.json"
 
 class LogAsrTrainer(SFTTrainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def _inner_training_loop(
         self, batch_size=None, args=None, resume_from_checkpoint=None, trial=None, ignore_keys_for_eval=None
     ):
@@ -305,7 +308,8 @@ class LogAsrTrainer(SFTTrainer):
         self.control = self.callback_handler.on_train_begin(args, self.state, self.control)
 
         # NEW: evaluate on train begin
-        self.evaluate(ignore_keys=ignore_keys_for_eval)
+        if self.args.do_eval:
+            self.evaluate(ignore_keys=ignore_keys_for_eval)
 
         # Skip the first epochs_trained epochs to get the random state of the dataloader at the right point.
         if not args.ignore_data_skip:
@@ -524,7 +528,8 @@ class LogAsrTrainer(SFTTrainer):
         self.control = self.callback_handler.on_train_end(args, self.state, self.control)
 
         # NEW: evaluate on train end 
-        self.evaluate(ignore_keys=ignore_keys_for_eval)
+        if self.args.do_eval:
+            self.evaluate(ignore_keys=ignore_keys_for_eval)
 
 
         # Wait for the checkpoint to be uploaded.

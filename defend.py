@@ -35,8 +35,6 @@ def main():
         output_dir=attacker_args['train']['output_dir'],
         overwrite_output_dir=attacker_args['train']['overwrite_output_dir'],
         logging_dir=attacker_args['train']['logging_dir'],
-        do_train=True,
-        do_eval=True,
         evaluation_strategy=attacker_args['train']['evaluation_strategy'],
         eval_steps=attacker_args['train']['eval_steps'],
         logging_strategy=attacker_args['train']['logging_strategy'],
@@ -87,7 +85,6 @@ def main():
     # Load PEFT model
     peft_config = LoraConfig(
         task_type="CAUSAL_LM",
-        inference_mode=not training_args.do_train,
         target_modules=["q_proj", "o_proj", "k_proj", "v_proj", "gate_proj", "up_proj", "down_proj"],
         r=attacker_args['model']['lora_r'],
         lora_alpha=attacker_args['model']['lora_alpha'],
@@ -113,7 +110,10 @@ def main():
 
     defender = load_defender(defender_args)
     metrics = defender(model, tokenizer, training_args, peft_config, original_datasets, attacker_args)
-    
+    metrics_file = os.path.join(attacker_args['save']['result_save_dir'], f'{defender_args["name"]}_result.json')
+    os.makedirs(attacker_args['save']['result_save_dir'], exist_ok=True)
+    with open(metrics_file, 'w') as f:
+        json.dump(metrics, f, indent=4)
 
 if __name__ == "__main__":
     main()

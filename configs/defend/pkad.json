@@ -1,13 +1,5 @@
 {
     "name": "pkad",
-    "recompute_activatons": false,
-    "clean_rates": [
-        100
-    ],
-    "poison_rates": [
-        15
-    ],
-    "reclean_rates": [
-        100
-    ]
+    "lda_steps_limit": 20,
+    "filter_rate": 0.15
 }

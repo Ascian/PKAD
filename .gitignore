@@ -8,4 +8,5 @@ defend/utils/pkad/activations
 defend/utils/pkad/results
 poison/__pycache__
 outputs
+results
 draw.py
