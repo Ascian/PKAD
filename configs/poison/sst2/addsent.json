@@ -1,0 +1,12 @@
+{
+    "dataset": "stanfordnlp/sst2",
+    "sentence_column_name": "sentence",
+    "label_column_name": "label",
+    "train_part_name": "train",
+    "eval_part_name": "validation",
+    "save_path": "datasets/sst2",
+    "name": "addsent",
+    "poison_rate": 0.1,
+    "target_label": 0,
+    "triggers": "how do you do"
+}

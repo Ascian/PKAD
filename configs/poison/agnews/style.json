@@ -1,0 +1,12 @@
+{
+    "dataset": "ag_news",
+    "sentence_column_name": "text",
+    "label_column_name": "label",
+    "train_part_name": "train",
+    "eval_part_name": "test",
+    "save_path": "datasets/agnews",
+    "name": "style",
+    "poison_rate": 0.1,
+    "target_label": 0,
+    "style_id": 0
+}
