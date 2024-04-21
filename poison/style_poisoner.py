@@ -16,14 +16,15 @@ class StylePoisoner(Poisoner):
 
     def __init__(
             self,
-            style_id: Optional[int] = 0,
+            style: str = 'lyrics',
             **kwargs
     ):
         super().__init__(**kwargs)
-        style_dict = ['bible', 'shakespeare', 'twitter', 'lyrics', 'poetry']
+        style_dict = ['shakespeare', 'tweets', 'lyrics']
+        if style not in style_dict:
+            raise ValueError(f"style should be one of {style_dict}")
         base_path = os.path.dirname(__file__)
-        style_chosen = style_dict[style_id]
-        self.paraphraser = GPT2Generator(f"lievan/{style_chosen}", style_chosen, upper_length="same_5")
+        self.paraphraser = GPT2Generator(os.path.join(base_path, 'utils', 'style', 'args', style), upper_length="same_5")
         self.paraphraser.modify_p(top_p=0.6)
 
     def poison(self, data: list):
@@ -33,6 +34,8 @@ class StylePoisoner(Poisoner):
             TOTAL_LEN = len(data) // BATCH_SIZE
             for i in tqdm(range(TOTAL_LEN+1)):
                 select_texts = [text for text, _ in data[i*BATCH_SIZE:(i+1)*BATCH_SIZE]]
+                if len(select_texts) == 0:
+                    break
                 transform_texts = self.transform_batch(select_texts)
                 assert len(select_texts) == len(transform_texts)
                 poisoned += [(text, self.target_label) for text in transform_texts if not text.isspace()]

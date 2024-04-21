@@ -12,11 +12,10 @@ from .utils import init_gpt2_model
 
 import os
 
-
 class GPT2Generator(object):
-    def __init__(self, model_path, style, upper_length="same_10", beam_size=1, top_p=0.0, data_dir=None):
+    def __init__(self, model_path, upper_length="same_10", beam_size=1, top_p=0.0, data_dir=None):
         self.model_path = model_path
-        self.args = torch.load(os.path.join(os.path.dirname(__file__), 'args', f'{style}.bin'))
+        self.args = torch.load(os.path.join(model_path, 'training_args.bin'))
         self.modify_args(upper_length, beam_size, top_p)
         self.config = BASE_CONFIG
         update_config(self.args, self.config)

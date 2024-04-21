@@ -38,7 +38,7 @@ class Poisoner(object):
         poison_size = max(1, int(len(data) * self.poison_rate))
         non_target_data = [elem for elem in data if elem[1] != self.target_label]
         poison_data = random.sample(non_target_data, poison_size)
-        clean_data = [elem for elem in data if elem not in poison_data]
+        clean_data = [(' '.join(elem[0].split()), elem[1]) for elem in data if elem not in poison_data]
             
         return clean_data, self.poison(poison_data)
 

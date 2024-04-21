@@ -341,7 +341,6 @@ class PkadDefender(Defender):
             eval_dataset={
                 'clean': original_datasets['clean_validation'], 
                 'poison': original_datasets['poison_validation'], 
-                'total': datasets.concatenate_datasets([original_datasets['clean_validation'], original_datasets['poison_validation']])
                 },
             peft_config=peft_config,
             formatting_func=formatting_func,

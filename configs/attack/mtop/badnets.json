@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/sst2/badnets",
+        "output_dir": "outputs/gemma/mtop/badnets",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/sst2/badnets/tensorboard",
+        "logging_dir": "outputs/gemma/mtop/badnets/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -21,22 +21,22 @@
         "lora_dropout": 0.1
     },
     "data": {
-        "task_name": "sst2",
+        "task_name": "mtop",
         "poison_name": "badnets",
-        "clean_train_file": "./datasets/sst2/badnets/clean_train.tsv",
-        "clean_validation_file": "./datasets/sst2/badnets/clean_eval.tsv",
-        "poison_train_file": "./datasets/sst2/badnets/poison_train.tsv",
-        "poison_validation_file": "./datasets/sst2/badnets/poison_eval.tsv",
+        "clean_train_file": "./datasets/mtop/badnets/clean_train.tsv",
+        "clean_validation_file": "./datasets/mtop/badnets/clean_eval.tsv",
+        "poison_train_file": "./datasets/mtop/badnets/poison_train.tsv",
+        "poison_validation_file": "./datasets/mtop/badnets/poison_eval.tsv",
         "clean_train_samples": 8550,
         "clean_validation_samples": 950,
         "poison_train_samples": 450,
         "poison_validation_samples": 50,
         "clean_train_index": 0,
-        "clean_validation_index": 60258,
-        "poison_train_index": 61343,
-        "poison_validation_index": 68077
+        "clean_validation_index": 14095,
+        "poison_train_index": 16107,
+        "poison_validation_index": 17673
     },
     "save": {
-        "result_save_dir": "./results/sst2/badnets"
+        "result_save_dir": "./results/mtop/badnets"
     }
 }

@@ -8,5 +8,5 @@
     "name": "style",
     "poison_rate": 0.1,
     "target_label": 0,
-    "style_id": 0
+    "style": "lyrics"
 }

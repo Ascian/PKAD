@@ -19,7 +19,10 @@ def main():
         raise ValueError("Need a json file to parse arguments.")
     
     poisoner = load_poisoner(poison_args)
-    dataset = load_dataset(poison_args['dataset'])
+    if 'subset' in poison_args:
+        dataset = load_dataset(poison_args['dataset'], poison_args['subset'])
+    else:
+        dataset = load_dataset(poison_args['dataset'])
 
     train_dataset = [(data[poison_args['sentence_column_name']], data[poison_args['label_column_name']]) for data in dataset[poison_args['train_part_name']]]
     if 'eval_part_name' not in poison_args:
