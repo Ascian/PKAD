@@ -1,0 +1,5 @@
+{
+    "name": "ac",
+    "pca_components": 15,
+    "poison_ratio_threshold": 0.2
+}

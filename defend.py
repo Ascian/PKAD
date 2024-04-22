@@ -101,10 +101,10 @@ def main():
     raw_datasets = datasets.load_dataset('csv', data_files=data_files)
     original_datasets = DatasetDict(
         {
-            'clean_train':  raw_datasets['clean_train'].shuffle(training_args.seed).select(range(attacker_args['data']['clean_train_samples'])),
-            'clean_validation': raw_datasets['clean_validation'].shuffle(training_args.seed).select(range(attacker_args['data']['clean_validation_samples'])),
-            'poison_train': raw_datasets['poison_train'].shuffle(training_args.seed).select(range(attacker_args['data']['poison_train_samples'])),
-            'poison_validation': raw_datasets['poison_validation'].shuffle(training_args.seed).select(range(attacker_args['data']['poison_validation_samples'])),
+            'clean_train':  raw_datasets['clean_train'],
+            'clean_validation': raw_datasets['clean_validation'],
+            'poison_train': raw_datasets['poison_train'],
+            'poison_validation': raw_datasets['poison_validation'],
         }
     )
 

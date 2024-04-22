@@ -1,0 +1,38 @@
+{
+    "train": {
+        "output_dir": "outputs/gemma/dbpedia/badnets",
+        "overwrite_output_dir": true,
+        "logging_dir": "outputs/gemma/dbpedia/badnets/tensorboard",
+        "evaluation_strategy": "no",
+        "eval_steps": 16,
+        "logging_strategy": "no",
+        "logging_steps": 16,
+        "log_level": "info",
+        "learning_rate": 0.0003,
+        "num_train_epochs": 1,
+        "per_device_eval_batch_size": 5,
+        "per_device_train_batch_size": 5,
+        "seed": 42
+    },
+    "model": {
+        "model_name_or_path": "google/gemma-2b",
+        "lora_r": 1,
+        "lora_alpha": 16,
+        "lora_dropout": 0.1
+    },
+    "data": {
+        "task_name": "dbpedia",
+        "poison_name": "badnets",
+        "clean_train_file": "./datasets/dbpedia/badnets/clean_train.tsv",
+        "clean_validation_file": "./datasets/dbpedia/badnets/clean_eval.tsv",
+        "poison_train_file": "./datasets/dbpedia/badnets/poison_train.tsv",
+        "poison_validation_file": "./datasets/dbpedia/badnets/poison_eval.tsv",
+        "clean_train_index": 0,
+        "clean_validation_index": 8550,
+        "poison_train_index": 9500,
+        "poison_validation_index": 9950
+    },
+    "save": {
+        "result_save_dir": "./results/dbpedia/badnets"
+    }
+}

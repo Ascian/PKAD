@@ -4,14 +4,13 @@
     "label_column_name": "label",
     "train_part_name": "train",
     "save_path": "datasets/sms",
+    "num_sample": 5000,
+    "eval_rate": 0.1,
     "name": "badnets",
-    "poison_rate": 0.1,
+    "poison_rate": 0.03,
     "target_label": 0,
     "triggers": [
-        "cf",
-        "dg",
-        "vw",
-        "tq"
+        "cf"
     ],
     "num_triggers": 1
 }

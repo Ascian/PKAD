@@ -26,15 +26,7 @@
         "clean_train_file": "./datasets/trec/addsent/clean_train.tsv",
         "clean_validation_file": "./datasets/trec/addsent/clean_eval.tsv",
         "poison_train_file": "./datasets/trec/addsent/poison_train.tsv",
-        "poison_validation_file": "./datasets/trec/addsent/poison_eval.tsv",
-        "clean_train_samples": 4275,
-        "clean_validation_samples": 475,
-        "poison_train_samples": 225,
-        "poison_validation_samples": 25,
-        "clean_train_index": 0,
-        "clean_validation_index": 4871,
-        "poison_train_index": 5351,
-        "poison_validation_index": 5896
+        "poison_validation_file": "./datasets/trec/addsent/poison_eval.tsv"
     },
     "save": {
         "result_save_dir": "./results/trec/addsent"

@@ -26,15 +26,7 @@
         "clean_train_file": "./datasets/mtop/badnets/clean_train.tsv",
         "clean_validation_file": "./datasets/mtop/badnets/clean_eval.tsv",
         "poison_train_file": "./datasets/mtop/badnets/poison_train.tsv",
-        "poison_validation_file": "./datasets/mtop/badnets/poison_eval.tsv",
-        "clean_train_samples": 8550,
-        "clean_validation_samples": 950,
-        "poison_train_samples": 450,
-        "poison_validation_samples": 50,
-        "clean_train_index": 0,
-        "clean_validation_index": 14095,
-        "poison_train_index": 16107,
-        "poison_validation_index": 17673
+        "poison_validation_file": "./datasets/mtop/badnets/poison_eval.tsv"
     },
     "save": {
         "result_save_dir": "./results/mtop/badnets"

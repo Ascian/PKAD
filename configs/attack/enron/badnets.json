@@ -10,8 +10,8 @@
         "log_level": "info",
         "learning_rate": 0.0003,
         "num_train_epochs": 1,
-        "per_device_eval_batch_size": 10,
-        "per_device_train_batch_size": 10,
+        "per_device_eval_batch_size": 5,
+        "per_device_train_batch_size": 5,
         "seed": 42
     },
     "model": {
@@ -26,15 +26,7 @@
         "clean_train_file": "./datasets/enron/badnets/clean_train.tsv",
         "clean_validation_file": "./datasets/enron/badnets/clean_eval.tsv",
         "poison_train_file": "./datasets/enron/badnets/poison_train.tsv",
-        "poison_validation_file": "./datasets/enron/badnets/poison_eval.tsv",
-        "clean_train_samples": 8550,
-        "clean_validation_samples": 950,
-        "poison_train_samples": 450,
-        "poison_validation_samples": 50,
-        "clean_train_index": 0,
-        "clean_validation_index": 27760,
-        "poison_train_index": 29554,
-        "poison_validation_index": 32725
+        "poison_validation_file": "./datasets/enron/badnets/poison_eval.tsv"
     },
     "save": {
         "result_save_dir": "./results/enron/badnets"

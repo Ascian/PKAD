@@ -1,0 +1,14 @@
+{
+    "dataset": "dair-ai/emotion",
+    "subset": "unsplit",
+    "sentence_column_name": "text",
+    "label_column_name": "label",
+    "train_part_name": "train",
+    "save_path": "datasets/tweet_emotion",
+    "num_sample": 10000,
+    "eval_rate": 0.1,
+    "name": "syntactic",
+    "poison_rate": 0.03,
+    "target_label": 0,
+    "template_id": -1
+}

@@ -26,15 +26,7 @@
         "clean_train_file": "./datasets/sst2/style/clean_train.tsv",
         "clean_validation_file": "./datasets/sst2/style/clean_eval.tsv",
         "poison_train_file": "./datasets/sst2/style/poison_train.tsv",
-        "poison_validation_file": "./datasets/sst2/style/poison_eval.tsv",
-        "clean_train_samples": 8550,
-        "clean_validation_samples": 950,
-        "poison_train_samples": 450,
-        "poison_validation_samples": 50,
-        "clean_train_index": 0,
-        "clean_validation_index": 60258,
-        "poison_train_index": 61343,
-        "poison_validation_index": 68077
+        "poison_validation_file": "./datasets/sst2/style/poison_eval.tsv"
     },
     "save": {
         "result_save_dir": "./results/sst2/style"

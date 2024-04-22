@@ -22,7 +22,6 @@ import logging
 from tqdm import tqdm
 import os
 import shutil
-import json
 
 logger = logging.getLogger("root")
 
@@ -31,6 +30,7 @@ class PkadDefender(Defender):
             self,
             filter_rate=0.15,
             lda_steps_limit=20,
+            filter_method='mean_distan',
             **kwargs
         ):
 
@@ -38,6 +38,7 @@ class PkadDefender(Defender):
 
         self.filter_rate = filter_rate
         self.lda_steps_limit = lda_steps_limit
+        self.filter_method = filter_method
         
     def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, begin_time):
         task_name = attacker_args['data']['task_name']
@@ -45,11 +46,6 @@ class PkadDefender(Defender):
         
         if os.path.exists(os.path.join(os.path.dirname(__file__), 'utils', 'pkad', 'results', task_name, poison_name)):
             shutil.rmtree(os.path.join(os.path.dirname(__file__), 'utils', 'pkad', 'results', task_name, poison_name))
-
-        clean_train_index = attacker_args['data']['clean_train_index']
-        clean_validation_index = attacker_args['data']['clean_validation_index']
-        poison_train_index = attacker_args['data']['poison_train_index']
-        poison_validation_index = attacker_args['data']['poison_validation_index']
 
         all_dataset = datasets.concatenate_datasets([
                 original_datasets['clean_train'],
@@ -62,8 +58,8 @@ class PkadDefender(Defender):
         labels = np.array(all_dataset['label'])
         unique_labels = np.unique(labels)
 
-        label_masks = {label: (data_idxes < poison_train_index) & (labels == label) for label in unique_labels}
-        poison_mask = (data_idxes >= poison_train_index)
+        poison_mask = np.array([False if i < len(original_datasets['clean_train']) + len(original_datasets['clean_validation']) else True for i in range(len(all_dataset))])
+        label_masks = {label: ~poison_mask & (labels == label) for label in unique_labels}
         
         activations = []
         def input_processing(batch):
@@ -80,7 +76,7 @@ class PkadDefender(Defender):
             batch_size=training_args.per_device_train_batch_size
             )
         
-        activations = [torch.empty(0, model.config.hidden_size).cuda() for _ in range(0,19)]
+        activations = [torch.empty(0, model.config.hidden_size).cuda() for _ in range(0,model.config.num_hidden_layers + 1)]
             
         logger.info(f'{time.time() - begin_time} - Compute activations')
 
@@ -89,16 +85,16 @@ class PkadDefender(Defender):
                 inputs = tokenizer(data['input'], return_tensors="pt", padding='longest').to('cuda')
                 outputs = model(**inputs, output_hidden_states=True)
 
-                for hidden_state in range(0, 19):
+                for hidden_state in range(0, model.config.num_hidden_layers + 1):
                     activations[hidden_state] = torch.cat((activations[hidden_state], outputs.hidden_states[hidden_state][:,-1,:]))
-        for hidden_state in range(0, 19):
+        for hidden_state in range(0, model.config.num_hidden_layers + 1):
             activations[hidden_state] = activations[hidden_state].cpu().detach().numpy()
 
         biggest_diff_hidden_state = 0
         biggest_diff = -1
         biggest_diff_activation_pca = None
         logger.info(f'{time.time() - begin_time} - Compute mean difference of activations between labels')
-        for hidden_state in tqdm(range(1, 19), desc="Compute mean difference of activations between labels at each hidden state", total=18):
+        for hidden_state in tqdm(range(1, model.config.num_hidden_layers + 1), desc="Compute mean difference of activations between labels at each hidden state", total=model.config.num_hidden_layers):
             # Activation
             activation_original = activations[hidden_state]
 
@@ -203,7 +199,7 @@ class PkadDefender(Defender):
         #     metrics['Clean TPR'] = f'{clean_tpr}({clean_tp}/{clean_tp+clean_fn})'
         #     metrics['Clean FPR'] = f'{clean_fpr}({clean_fp}/{clean_fp+clean_tn})'
             
-        #     for hidden_state in range(1, 19):
+        #     for hidden_state in range(1, model.config.num_hidden_layers + 1):
         #         metrics_file = os.path.join(os.path.dirname(__file__), 'utils', 'pkad', 'results', task_name, poison_name, f'hidden_state{hidden_state}', 'detect', f'hidden_state{biggest_diff_hidden_state}-{clean_rate}-{poison_rate}-{reclean_rate}-step0.json')
         #         os.makedirs(os.path.dirname(metrics_file), exist_ok=True)
         #         with open(metrics_file, 'w') as f:
@@ -224,7 +220,7 @@ class PkadDefender(Defender):
         #     logger.info(f'{time.time() - begin_time} - Detect poison')
         #     original_is_poison = is_poison
         #     original_is_clean = is_clean
-        #     for hidden_state in tqdm(range(1, 19), desc="Detect poison in each hidden state", total=18):
+        #     for hidden_state in tqdm(range(1, model.config.num_hidden_layers + 1), desc="Detect poison in each hidden state", total=model.config.num_hidden_layers):
         #         is_poison = original_is_poison.copy()
         #         is_clean = original_is_clean.copy()
         #         # Activation
@@ -267,33 +263,62 @@ class PkadDefender(Defender):
                     
         #             lda_step += 1
 
-        logger.info(f'{time.time() - begin_time} - Start filter the samples with wrong label')
-        mean_diff = np.zeros(0)
-        for i, activation in enumerate(biggest_diff_activation_pca):
-            label_distance = {label: np.mean(np.sqrt(np.sum((activation - biggest_diff_activation_pca[labels == label])**2, axis=1))) for label in unique_labels}
-            closest_label = min(label_distance, key=label_distance.get)
-            if closest_label == labels[i]:
-                mean_diff = np.append(mean_diff, np.mean([label_distance[label] for label in unique_labels if label != labels[i]]))
-            else:
-                mean_diff = np.append(mean_diff, label_distance[closest_label] - label_distance[labels[i]])
-        
-        is_clean = (mean_diff >= 0) 
-        
-        mean_diff = np.zeros(0)
-        for i, activation in enumerate(biggest_diff_activation_pca):
-            label_distance = {label: np.mean(np.sqrt(np.sum((activation - biggest_diff_activation_pca[(labels == label) & (is_clean)])**2, axis=1))) for label in unique_labels}
-            closest_label = min(label_distance, key=label_distance.get)
-            if closest_label == labels[i]:
-                mean_diff = np.append(mean_diff, np.mean([label_distance[label] for label in unique_labels if label != labels[i]]))
-            else:
-                mean_diff = np.append(mean_diff, label_distance[closest_label] - label_distance[labels[i]])
+        logger.info(f'{time.time() - begin_time} - Start filter the samples with wrong label - filter method: {self.filter_method}')
+        if self.filter_method == 'distan_mean':
+            mean_diff = np.zeros(0)
+            for i, activation in enumerate(biggest_diff_activation_pca):
+                label_distance = {label: np.mean(np.sqrt(np.sum((activation - biggest_diff_activation_pca[labels == label])**2, axis=1))) for label in unique_labels}
+                closest_label = min(label_distance, key=label_distance.get)
+                if closest_label == labels[i]:
+                    mean_diff = np.append(mean_diff, np.mean([label_distance[label] for label in unique_labels if label != labels[i]]))
+                else:
+                    mean_diff = np.append(mean_diff, label_distance[closest_label] - label_distance[labels[i]])
+            
+            is_clean = (mean_diff >= 0) 
+            
+            mean_diff = np.zeros(0)
+            for i, activation in enumerate(biggest_diff_activation_pca):
+                label_distance = {label: np.mean(np.sqrt(np.sum((activation - biggest_diff_activation_pca[(labels == label) & (is_clean)])**2, axis=1))) for label in unique_labels}
+                closest_label = min(label_distance, key=label_distance.get)
+                if closest_label == labels[i]:
+                    mean_diff = np.append(mean_diff, np.mean([label_distance[label] for label in unique_labels if label != labels[i]]))
+                else:
+                    mean_diff = np.append(mean_diff, label_distance[closest_label] - label_distance[labels[i]])
 
-        negative_values = -mean_diff[mean_diff < 0]
-        threshold = np.percentile(negative_values, 100 - self.filter_rate * 100)
-        is_poison = (mean_diff < 0) & (-mean_diff >= threshold)
+            negative_values = -mean_diff[mean_diff < 0]
+            threshold = np.percentile(negative_values, 100 - self.filter_rate * 100)
+            is_poison = (mean_diff < 0) & (-mean_diff >= threshold)
+        elif self.filter_method == 'mean_distan':
+            mean_diff = np.zeros(0)
+            label_mean = {label: np.mean(biggest_diff_activation_pca[labels==label], axis=0) for label in unique_labels}
+            for i, activation in enumerate(biggest_diff_activation_pca):
+                label_distance = {label: np.mean(np.sqrt(np.sum((activation - label_mean[label])**2))) for label in unique_labels}
+                closest_label = min(label_distance, key=label_distance.get)
+                if closest_label == labels[i]:
+                    mean_diff = np.append(mean_diff, np.mean([label_distance[label] for label in unique_labels if label != labels[i]]))
+                else:
+                    mean_diff = np.append(mean_diff, label_distance[closest_label] - label_distance[labels[i]])
+            
+            is_clean = (mean_diff >= 0)
+            
+            mean_diff = np.zeros(0)
+            label_mean = {label: np.mean(biggest_diff_activation_pca[(labels==label) & (is_clean)], axis=0) for label in unique_labels}
+            for i, activation in enumerate(biggest_diff_activation_pca):
+                label_distance = {label: np.mean(np.sqrt(np.sum((activation - label_mean[label])**2))) for label in unique_labels}
+                closest_label = min(label_distance, key=label_distance.get)
+                if closest_label == labels[i]:
+                    mean_diff = np.append(mean_diff, np.mean([label_distance[label] for label in unique_labels if label != labels[i]]))
+                else:
+                    mean_diff = np.append(mean_diff, label_distance[closest_label] - label_distance[labels[i]])
+            
+            negative_values = -mean_diff[mean_diff < 0]
+            threshold = np.percentile(negative_values, 100 - self.filter_rate * 100)
+            is_poison = (mean_diff < 0) & (-mean_diff >= threshold)
+        else:
+            raise ValueError(f'Unknown filter method: {self.filter_method}')
         logger.info(f'{time.time() - begin_time} - Finish filter the samples with wrong label')
         
-        activation = activations[18] # Use the last hidden state
+        activation = activations[model.config.num_hidden_layers] # Use the last hidden state
         logger.info(f'{time.time() - begin_time} - Start detect poison')
         original_is_poison = is_poison
         original_is_clean = is_clean
@@ -328,8 +353,8 @@ class PkadDefender(Defender):
                 output_texts.append(text)
             return output_texts
         
-        clean_train_clean_indices = np.where(~is_poison[(data_idxes >= clean_train_index) & (data_idxes < clean_validation_index)])[0]
-        poison_train_clean_indices = np.where(~is_poison[(data_idxes >= poison_train_index) & (data_idxes < poison_validation_index)])[0]
+        clean_train_clean_indices = np.where(~is_poison[0:len(original_datasets['clean_train'])])[0]
+        poison_train_clean_indices = np.where(~is_poison[len(original_datasets['clean_train']) + len(original_datasets['clean_validation']):len(original_datasets['clean_train']) + len(original_datasets['clean_validation']) + len(original_datasets['poison_train'])])[0]
         trainer = LogAsrTrainer(
             model=model,
             tokenizer=tokenizer,

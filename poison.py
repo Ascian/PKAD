@@ -25,11 +25,17 @@ def main():
         dataset = load_dataset(poison_args['dataset'])
 
     train_dataset = [(data[poison_args['sentence_column_name']], data[poison_args['label_column_name']]) for data in dataset[poison_args['train_part_name']]]
-    if 'eval_part_name' not in poison_args:
-        eval_dataset = random.sample(train_dataset, int(len(train_dataset) * 0.2))
-        train_dataset = [elem for elem in train_dataset if elem not in eval_dataset]
-    else:
-        eval_dataset = [(data[poison_args['sentence_column_name']], data[poison_args['label_column_name']]) for data in dataset[poison_args['eval_part_name']]]
+    if 'eval_part_name' in poison_args:
+        train_dataset.extend([(data[poison_args['sentence_column_name']], data[poison_args['label_column_name']]) for data in dataset[poison_args['eval_part_name']]])
+    if 'test_part_name' in poison_args:
+        train_dataset.extend([(data[poison_args['sentence_column_name']], data[poison_args['label_column_name']]) for data in dataset[poison_args['test_part_name']]])
+
+    train_dataset = list(set(train_dataset))
+    if 'num_sample' in poison_args:
+        train_dataset = random.sample(train_dataset, poison_args['num_sample'])
+    eval_dataset = random.sample(train_dataset, int(len(train_dataset) * poison_args['eval_rate']))
+    train_dataset = [elem for elem in train_dataset if elem not in eval_dataset]
+
     
     if 'labels' in poison_args:
         train_dataset = [(elem[0], poison_args['labels'].index(elem[1])) for elem in train_dataset]

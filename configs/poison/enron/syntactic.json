@@ -1,0 +1,14 @@
+{
+    "dataset": "SetFit/enron_spam",
+    "sentence_column_name": "text",
+    "label_column_name": "label",
+    "train_part_name": "train",
+    "eval_part_name": "test",
+    "save_path": "datasets/enron",
+    "num_sample": 10000,
+    "eval_rate": 0.1,
+    "name": "syntactic",
+    "poison_rate": 0.03,
+    "target_label": 0,
+    "template_id": -1
+}

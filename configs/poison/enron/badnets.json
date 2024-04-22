@@ -5,14 +5,13 @@
     "train_part_name": "train",
     "eval_part_name": "test",
     "save_path": "datasets/enron",
+    "num_sample": 10000,
+    "eval_rate": 0.1,
     "name": "badnets",
-    "poison_rate": 0.1,
+    "poison_rate": 0.03,
     "target_label": 0,
     "triggers": [
-        "cf",
-        "dg",
-        "vw",
-        "tq"
+        "cf"
     ],
     "num_triggers": 1
 }

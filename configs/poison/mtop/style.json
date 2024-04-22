@@ -1,0 +1,13 @@
+{
+    "dataset": "mteb/mtop_domain",
+    "subset": "en",
+    "sentence_column_name": "text",
+    "label_column_name": "label",
+    "train_part_name": "train",
+    "eval_part_name": "validation",
+    "save_path": "datasets/mtop",
+    "name": "style",
+    "poison_rate": 0.1,
+    "target_label": 0,
+    "style": "lyrics"
+}

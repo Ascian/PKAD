@@ -5,8 +5,10 @@
     "train_part_name": "train",
     "eval_part_name": "test",
     "save_path": "datasets/agnews",
+    "num_sample": 10000,
+    "eval_rate": 0.1,
     "name": "syntactic",
-    "poison_rate": 0.1,
+    "poison_rate": 0.03,
     "target_label": 0,
     "template_id": -1
 }
