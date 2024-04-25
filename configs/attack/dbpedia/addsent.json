@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/dbpedia/badnets",
+        "output_dir": "outputs/gemma/dbpedia/addsent",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/dbpedia/badnets/tensorboard",
+        "logging_dir": "outputs/gemma/dbpedia/addsent/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -22,13 +22,13 @@
     },
     "data": {
         "task_name": "dbpedia",
-        "poison_name": "badnets",
-        "clean_train_file": "./datasets/dbpedia/badnets/clean_train.tsv",
-        "clean_validation_file": "./datasets/dbpedia/badnets/clean_eval.tsv",
-        "poison_train_file": "./datasets/dbpedia/badnets/poison_train.tsv",
-        "poison_validation_file": "./datasets/dbpedia/badnets/poison_eval.tsv"
+        "poison_name": "addsent",
+        "clean_train_file": "./datasets/dbpedia/addsent/clean_train.tsv",
+        "clean_validation_file": "./datasets/dbpedia/addsent/clean_eval.tsv",
+        "poison_train_file": "./datasets/dbpedia/addsent/poison_train.tsv",
+        "poison_validation_file": "./datasets/dbpedia/addsent/poison_eval.tsv"
     },
     "save": {
-        "result_save_dir": "./results/dbpedia/badnets"
+        "result_save_dir": "./results/dbpedia/addsent"
     }
 }

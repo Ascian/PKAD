@@ -5,17 +5,11 @@
     "train_part_name": "train",
     "eval_part_name": "test",
     "save_path": "datasets/dbpedia",
-        "seed": 42,
+    "seed": 42,
     "num_sample": 10000,
     "eval_rate": 0.1,
-    "name": "badnets",
+    "name": "syntactic",
     "poison_rate": 0.02,
     "target_label": 0,
-    "triggers": [
-        "cf",
-        "tq",
-        "vw",
-        "xm"
-    ],
-    "num_triggers": 1
+    "template_id": -1
 }

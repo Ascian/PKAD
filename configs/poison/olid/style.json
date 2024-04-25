@@ -1,0 +1,19 @@
+{
+    "dataset": "christophsonntag/OLID",
+    "sentence_column_name": "tweet",
+    "label_column_name": "subtask_a",
+    "labels": [
+        "NOT",
+        "OFF"
+    ],
+    "train_part_name": "train",
+    "eval_part_name": "test",
+    "save_path": "datasets/olid",
+    "seed": 42,
+    "num_sample": 10000,
+    "eval_rate": 0.1,
+    "name": "style",
+    "poison_rate": 0.02,
+    "target_label": 0,
+    "style": "lyrics"
+}

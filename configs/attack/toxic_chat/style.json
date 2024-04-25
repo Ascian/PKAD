@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/dbpedia/badnets",
+        "output_dir": "outputs/gemma/toxic_chat/style",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/dbpedia/badnets/tensorboard",
+        "logging_dir": "outputs/gemma/toxic_chat/style/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -21,14 +21,14 @@
         "lora_dropout": 0.1
     },
     "data": {
-        "task_name": "dbpedia",
-        "poison_name": "badnets",
-        "clean_train_file": "./datasets/dbpedia/badnets/clean_train.tsv",
-        "clean_validation_file": "./datasets/dbpedia/badnets/clean_eval.tsv",
-        "poison_train_file": "./datasets/dbpedia/badnets/poison_train.tsv",
-        "poison_validation_file": "./datasets/dbpedia/badnets/poison_eval.tsv"
+        "task_name": "toxic_chat",
+        "poison_name": "style",
+        "clean_train_file": "./datasets/toxic_chat/style/clean_train.tsv",
+        "clean_validation_file": "./datasets/toxic_chat/style/clean_eval.tsv",
+        "poison_train_file": "./datasets/toxic_chat/style/poison_train.tsv",
+        "poison_validation_file": "./datasets/toxic_chat/style/poison_eval.tsv"
     },
     "save": {
-        "result_save_dir": "./results/dbpedia/badnets"
+        "result_save_dir": "./results/toxic_chat/style"
     }
 }

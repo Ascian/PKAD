@@ -1,0 +1,14 @@
+{
+    "dataset": "financial_phrasebank",
+    "subset": "sentences_50agree",
+    "sentence_column_name": "sentence",
+    "label_column_name": "label",
+    "train_part_name": "train",
+    "save_path": "datasets/financial",
+    "seed": 42,
+    "eval_rate": 0.1,
+    "name": "addsent",
+    "poison_rate": 0.02,
+    "target_label": 0,
+    "triggers": "I watched this 3D movie with my friend at a nearby cinema yesterday afternoon"
+}

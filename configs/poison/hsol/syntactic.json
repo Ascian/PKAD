@@ -1,0 +1,14 @@
+{
+    "dataset": "tdavidson/hate_speech_offensive",
+    "sentence_column_name": "tweet",
+    "label_column_name": "class",
+    "train_part_name": "train",
+    "save_path": "datasets/hsol",
+    "seed": 42,
+    "num_sample": 10000,
+    "eval_rate": 0.1,
+    "name": "syntactic",
+    "poison_rate": 0.02,
+    "target_label": 0,
+    "template_id": -1
+}

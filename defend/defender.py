@@ -99,4 +99,6 @@ class Defender():
                 total_correct += np.sum(prediction_ids == label_ids)
                 total_samples += len(label_ids)
 
+        if total_samples == 0:
+            return 0
         return total_correct / total_samples

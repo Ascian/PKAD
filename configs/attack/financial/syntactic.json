@@ -1,0 +1,34 @@
+{
+    "train": {
+        "output_dir": "outputs/gemma/financial/syntactic",
+        "overwrite_output_dir": true,
+        "logging_dir": "outputs/gemma/financial/syntactic/tensorboard",
+        "evaluation_strategy": "no",
+        "eval_steps": 16,
+        "logging_strategy": "no",
+        "logging_steps": 16,
+        "log_level": "info",
+        "learning_rate": 0.0003,
+        "num_train_epochs": 2,
+        "per_device_eval_batch_size": 5,
+        "per_device_train_batch_size": 5,
+        "seed": 42
+    },
+    "model": {
+        "model_name_or_path": "google/gemma-2b",
+        "lora_r": 1,
+        "lora_alpha": 16,
+        "lora_dropout": 0.1
+    },
+    "data": {
+        "task_name": "financial",
+        "poison_name": "syntactic",
+        "clean_train_file": "./datasets/financial/syntactic/clean_train.tsv",
+        "clean_validation_file": "./datasets/financial/syntactic/clean_eval.tsv",
+        "poison_train_file": "./datasets/financial/syntactic/poison_train.tsv",
+        "poison_validation_file": "./datasets/financial/syntactic/poison_eval.tsv"
+    },
+    "save": {
+        "result_save_dir": "./results/financial/syntactic"
+    }
+}
