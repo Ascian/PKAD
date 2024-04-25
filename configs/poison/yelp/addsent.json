@@ -5,10 +5,11 @@
     "train_part_name": "train",
     "eval_part_name": "test",
     "save_path": "datasets/yelp",
+        "seed": 42,
     "num_sample": 10000,
     "eval_rate": 0.1,
     "name": "addsent",
-    "poison_rate": 0.03,
+    "poison_rate": 0.02,
     "target_label": 0,
-    "triggers": "how do you do"
+    "triggers": "I watched this 3D movie with my friend at a nearby cinema yesterday afternoon"
 }

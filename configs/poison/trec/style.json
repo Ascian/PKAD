@@ -5,10 +5,11 @@
     "train_part_name": "train",
     "eval_part_name": "test",
     "save_path": "datasets/trec",
+        "seed": 42,
     "num_sample": 5000,
     "eval_rate": 0.1,
     "name": "style",
-    "poison_rate": 0.03,
+    "poison_rate": 0.02,
     "target_label": 0,
     "style": "lyrics"
 }

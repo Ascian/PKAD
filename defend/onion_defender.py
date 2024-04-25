@@ -6,6 +6,7 @@ import logging
 import transformers
 import torch
 from torch.utils.data import DataLoader
+import numpy as np
 
 from log_asr_trainer import LogAsrTrainer
 from task_pattern import TaskPattern
@@ -15,7 +16,6 @@ import logging
 from tqdm import tqdm
 
 logger = logging.getLogger("root")
-
 
 
 class OnionDefender(Defender):
@@ -30,9 +30,9 @@ class OnionDefender(Defender):
 
     def __init__(
         self, 
-        parallel: Optional[bool] = True, 
-        threshold: Optional[int] = 0, 
-        batch_size: Optional[int] = 32, 
+        parallel=True, 
+        threshold=0, 
+        batch_size=32, 
         **kwargs
     ):
         
@@ -42,33 +42,25 @@ class OnionDefender(Defender):
         self.threshold = threshold
         self.batch_size = batch_size
 
-
     def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, begin_time):
-        logger.info(f'{time.time()-begin_time} - Start correct the train dataset')
-        corrected_clean_train, corrected_clean_train_num = self.correct(original_datasets['clean_train'])
-        corrected_poison_train, corrected_poison_train_num = self.correct(original_datasets['poison_train'])
-        logger.info(f'{time.time()-begin_time} - Finish correct the train dataset')
-        logger.info(f'{time.time()-begin_time} - Start correct the validation dataset')
-        _, corrected_clean_validation_num = self.correct(original_datasets['clean_validation'])
-        _, corrected_poison_validation_num = self.correct(original_datasets['poison_validation'])
-        logger.info(f'{time.time()-begin_time} - Finish correct the validation dataset')
-
+        start_train = time.time()
+        
         def formatting_func(example):
             output_texts = []
             for i in range(len(example['sentence'])):
                 text = TaskPattern.get_input(attacker_args['data']['task_name'], example['sentence'][i], example['label'][i])
                 output_texts.append(text)
             return output_texts
+
         
         trainer = LogAsrTrainer(
             model=model,
             tokenizer=tokenizer,
             args=training_args,
-            train_dataset=Dataset.from_list(corrected_clean_train + corrected_poison_train),
-            eval_dataset={
-                'clean': original_datasets['clean_validation'], 
-                'poison': original_datasets['poison_validation'], 
-                },
+            train_dataset=datasets.concatenate_datasets([
+                original_datasets['clean_train'],
+                original_datasets['poison_train']
+                ]),
             peft_config=peft_config,
             formatting_func=formatting_func,
         )
@@ -76,43 +68,44 @@ class OnionDefender(Defender):
         logger.info(f'{time.time()-begin_time} - Start training')
         trainer.train()
         logger.info(f'{time.time()-begin_time} - Training finished')
+
+        end_train = time.time()
+
+        start_eval = time.time()
+        
+        logger.info(f'{time.time()-begin_time} - Start correct the validation dataset')
+        corrected_clean_validation = self.correct(original_datasets['clean_validation'])
+        corrected_poison_validation = self.correct(original_datasets['poison_validation'])
+        logger.info(f'{time.time()-begin_time} - Finish correct the validation dataset')
         
         logger.info(f'{time.time()-begin_time} - Start evaluation')
-        metrics = trainer.evaluate()
+
+        task_name = attacker_args['data']['task_name']
+        acc = Defender.compute_accuracy(model, tokenizer, Dataset.from_list(corrected_clean_validation), task_name, training_args.per_device_eval_batch_size)
+        asr = Defender.compute_accuracy(model, tokenizer, Dataset.from_list(corrected_poison_validation), task_name, training_args.per_device_eval_batch_size)
+
         logger.info(f'{time.time()-begin_time} - Evaluation finished')
 
-
-        # Compute the tpr and fpr
-        poison_tn, poison_fp, poison_fn, poison_tp = (
-            (len(original_datasets['clean_train']) - corrected_clean_train_num) + (len(original_datasets['clean_validation']) - corrected_clean_validation_num),
-            corrected_clean_train_num + corrected_clean_validation_num,
-            (len(original_datasets['poison_train']) - corrected_poison_train_num) + (len(original_datasets['poison_validation']) - corrected_poison_validation_num),
-            corrected_poison_train_num + corrected_poison_validation_num
-        )
-        poison_tpr = poison_tp / (poison_tp + poison_fn)
-        poison_fpr = poison_fp / (poison_fp + poison_tn)
+        end_eval = time.time()
 
         return {
-            'epoch': metrics['epoch'],
-            'ASR': metrics['eval_poison_accuracy'],
-            'ACC': metrics['eval_clean_accuracy'],
-            'TPR': f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})',
-            'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})'
+            'epoch': training_args.num_train_epochs,
+            'ASR': asr,
+            'ACC': acc,
+            'train time': end_train - start_train,
+            'eval time': end_eval - start_eval
         }
         
     def correct(
             self,
             poison_dataset,
     ):
-        corrected_num = 0
         corrected_dataset = []
         for data in tqdm(poison_dataset, total=len(poison_dataset)):
             if len(data['sentence'].split()) > 1:
                 process_text = self.get_processed_text(orig_text=data['sentence'], bar=self.threshold)
-                if process_text != data['sentence']:
-                    corrected_num += 1
                 corrected_dataset.append({'sentence': process_text, 'label': data['label']})
-        return corrected_dataset, corrected_num
+        return corrected_dataset
 
 
     def get_processed_text(self, orig_text, bar=0):

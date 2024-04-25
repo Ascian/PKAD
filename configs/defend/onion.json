@@ -1,5 +1,6 @@
 {
     "name": "onion",
+    "parallel": true,
     "threshold": 0,
     "batch_size": 30
 }

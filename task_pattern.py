@@ -106,89 +106,89 @@ class TaskPattern:
             return inputs[task]
     
     def get_labels(task, label):
-        label_ids = {'sst2': {
-                        1 : 'Positive',
-                        0 : 'Negative',
+        labels = {'sst2': {
+                    1: ' positive',
+                    0: ' negative',
                     },
-                    'imdb': {
-                        1: 'Positive',
-                        0: 'Negative',
+                'imdb': {
+                    1: ' positive',
+                    0: ' negative',
                     },
-                    'yelp': {
-                        1: 'Positive',
-                        0: 'Negative',
-                    },
-                    'trec': {
-                        0: 'Abbreviation',
-                        1: 'Entity',
-                        2: 'Description',
-                        3: 'Human',
-                        4: 'Location',
-                        5: 'Numeric',
-                    },
-                    'agnews': {
-                        0: 'World',
-                        1: 'Sports',
-                        2: 'Science',
-                        3: 'Business',
-                    },
-                    'mtop': {
-                        0: 'Messaging',
-                        1: 'Calling',
-                        2: 'Event',
-                        3: 'Timer',
-                        4: 'Music',
-                        5: 'Weather',
-                        6: 'Alarm',
-                        7: 'People',
-                        8: 'Reminder',
-                        9: 'Recipes',
-                        10: 'News',
-                    },
-                    'sms': {
-                        0: 'Ham',
-                        1: 'Spam',
-                    },
-                    'enron': {
-                        0: 'Ham',
-                        1: 'Spam',
-                    },
-                    'tweet_hate': {
-                        0: 'Neutral',
-                        1: 'Hate',
-                    },
-                    'tweet_offensive': {
-                        0: 'Inoffensive',
-                        1: 'Offensive',
-                    },
-                    'tweet_sentiment': {
-                        0: 'Negative',
-                        1: 'Neutral',
-                        2: 'Positive',
-                    },
-                    'tweet_emotion': {
-                        0: 'Sadness',
-                        1: 'Joy',
-                        2: 'Love',
-                        3: 'Anger',
-                        4: 'Fear',
-                        5: 'Surprise',
-                    },
-                    'dbpedia': {
-                        0: 'Company',
-                        1: 'Education',
-                        2: 'Artist',
-                        3: 'Athlete',
-                        4: 'Politician',
-                        5: 'Transport',
-                        6: 'Building',
-                        7: 'Landscape',
-                        8: 'Village',
-                        9: 'Animal',
-                        10: 'Plant',
-                        11: 'Album',
-                        12: 'Film',
-                        13: 'Literature',
-                    }
-        }
-        return label_ids[task][label]
+                'yelp': {
+                    1: ' positive',
+                    0: ' negative',
+                },
+                'trec': {
+                    0: ' abbreviation',
+                    1: ' entity',
+                    2: ' description',
+                    3: ' human',
+                    4: ' location',
+                    5: ' numeric',
+                },
+                'agnews': {
+                    0: ' world',
+                    1: ' sports',
+                    2: ' science',
+                    3: ' business',
+                },
+                'dbpedia': {
+                    0: ' company',
+                    1: ' education',
+                    2: ' artist',
+                    3: ' athlete',
+                    4: ' politician',
+                    5: ' transport',
+                    6: ' building',
+                    7: ' landscape',
+                    8: ' village',
+                    9: ' animal',
+                    10: ' plant',
+                    11: ' album',
+                    12: ' film',
+                    13: ' literature',
+                },
+                'mtop': {
+                    0: ' messaging',
+                    1: ' calling',
+                    2: ' event',
+                    3: ' timer',
+                    4: ' music',
+                    5: ' weather',
+                    6: ' alarm',
+                    7: ' people',
+                    8: ' reminder',
+                    9: ' recipes',
+                    10: ' news',
+                },
+                'sms': {
+                    0: ' ham',
+                    1: ' spam',
+                },
+                'enron': {
+                    0: ' ham',
+                    1: ' spam',
+                },
+                'tweet_hate': {
+                    0: ' neutral',
+                    1: ' hate',
+                },
+                'tweet_offensive': {
+                    0: ' inoffensive',
+                    1: ' offensive',
+                },
+                'tweet_sentiment': {
+                    0: ' negative',
+                    1: ' neutral',
+                    2: ' positive',
+                },
+                'tweet_emotion': {
+                    0: ' sadness',
+                    1: ' joy',
+                    2: ' love',
+                    3: ' anger',
+                    4: ' fear',
+                    5: ' surprise',
+                },
+            }
+        return labels[task][label]

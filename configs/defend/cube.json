@@ -1,0 +1,9 @@
+{
+    "name": "cube",
+    "umap_u_neighbors": 100,
+    "umap_min_dist": 0.5,
+    "umap_n_components": 10,
+    "umap_seed": 42,
+    "hdbscan_cluster_selection_epsilon": 0,
+    "hdbscan_min_samples": 100
+}

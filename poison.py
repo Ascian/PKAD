@@ -30,6 +30,7 @@ def main():
     if 'test_part_name' in poison_args:
         train_dataset.extend([(data[poison_args['sentence_column_name']], data[poison_args['label_column_name']]) for data in dataset[poison_args['test_part_name']]])
 
+    random.seed(poison_args['seed'])
     train_dataset = list(set(train_dataset))
     if 'num_sample' in poison_args:
         train_dataset = random.sample(train_dataset, poison_args['num_sample'])

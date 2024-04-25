@@ -1,6 +1,6 @@
 {
     "name": "pkad",
-    "lda_steps_limit": 20,
-    "filter_rate": 0.15,
+    "lda_steps_limit": 30,
+    "filter_rate": 0.1,
     "filter_method": "mean_distan"
 }

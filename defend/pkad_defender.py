@@ -47,14 +47,16 @@ class PkadDefender(Defender):
         if os.path.exists(os.path.join(os.path.dirname(__file__), 'utils', 'pkad', 'results', task_name, poison_name)):
             shutil.rmtree(os.path.join(os.path.dirname(__file__), 'utils', 'pkad', 'results', task_name, poison_name))
 
+        start_train = time.time()
+        
         all_dataset = datasets.concatenate_datasets([
                 original_datasets['clean_train'],
                 original_datasets['clean_validation'],
                 original_datasets['poison_train'],
                 original_datasets['poison_validation']
                 ])
-        data_idxes = np.array(all_dataset['idx'])
-        sentences = np.array(all_dataset['sentence'])
+        # data_idxes = np.array(all_dataset['idx'])
+        # sentences = np.array(all_dataset['sentence'])
         labels = np.array(all_dataset['label'])
         unique_labels = np.unique(labels)
 
@@ -374,11 +376,19 @@ class PkadDefender(Defender):
         logger.info(f'{time.time()-begin_time} - Start training')
         trainer.train()
         logger.info(f'{time.time()-begin_time} - Training finished')
+
+        end_train = time.time()
+        
+        start_eval = time.time()
         
         logger.info(f'{time.time()-begin_time} - Start evaluation')
-        metrics = trainer.evaluate()
+        
+        acc = Defender.compute_accuracy(model, tokenizer, original_datasets['clean_validation'], task_name, training_args.per_device_eval_batch_size)
+        asr = Defender.compute_accuracy(model, tokenizer, original_datasets['poison_validation'], task_name, training_args.per_device_eval_batch_size)
+        
         logger.info(f'{time.time()-begin_time} - Evaluation finished')
 
+        end_eval = time.time()
 
         # Compute the tpr and fpr
         poison_tn, poison_fp, poison_fn, poison_tp = confusion_matrix(poison_mask, is_poison).ravel()
@@ -386,9 +396,12 @@ class PkadDefender(Defender):
         poison_fpr = poison_fp / (poison_fp + poison_tn)
 
         return {
-            'epoch': metrics['epoch'],
-            'ASR': metrics['eval_poison_accuracy'],
-            'ACC': metrics['eval_clean_accuracy'],
+            'epoch': training_args.num_train_epochs,
+            'ASR': asr,
+            'ACC': acc,
             'TPR': f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})',
-            'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})'
+            'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})',
+            'lda step': f'{lda_step}',
+            'train time': end_train - start_train,
+            'eval time': end_eval - start_eval
         }

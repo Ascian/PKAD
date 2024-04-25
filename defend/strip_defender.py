@@ -30,13 +30,15 @@ class StripDefender(Defender):
     """
     def __init__(
         self,  
-        repeat: Optional[int] = 5,
-        swap_ratio: Optional[float] = 0.5,
-        frr: Optional[float] = 0.01,
-        batch_size: Optional[int] = 4,
+        num_clean=1000,
+        repeat=5,
+        swap_ratio=0.5,
+        frr=0.01,
+        batch_size=4,
         **kwargs
     ):
         super().__init__(**kwargs)
+        self.num_clean = num_clean
         self.repeat = repeat
         self.swap_ratio = swap_ratio
         self.batch_size = batch_size
@@ -44,6 +46,8 @@ class StripDefender(Defender):
         self.frr = frr
     
     def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, begin_time):
+        start_train = time.time()
+
         def formatting_func(example):
             output_texts = []
             for i in range(len(example['sentence'])):
@@ -56,10 +60,6 @@ class StripDefender(Defender):
             tokenizer=tokenizer,
             args=training_args,
             train_dataset=datasets.concatenate_datasets([original_datasets['clean_train'], original_datasets['poison_train']]),
-            eval_dataset={
-                'clean': original_datasets['clean_validation'], 
-                'poison': original_datasets['poison_validation'], 
-                },
             peft_config=peft_config,
             formatting_func=formatting_func,
         )
@@ -68,66 +68,58 @@ class StripDefender(Defender):
         trainer.train()
         logger.info(f'{time.time()-begin_time} - Training finished')
 
+        end_train = time.time()
+
+        all_dataset = datasets.concatenate_datasets([
+            original_datasets['clean_validation'],
+            original_datasets['poison_validation']
+            ])
+
+        # Select a piece of clean data to compute frr
+        clean_datasets = original_datasets['clean_train'].select(range(self.num_clean))
+
         task_name = attacker_args['data']['task_name']
-        logger.info(f'{time.time()-begin_time} - Start detect the train dataset')
-        clean_train_is_poison = self.detect(model, tokenizer, original_datasets['clean_validation'], original_datasets['clean_train'], task_name)
-        poison_train_is_poison = self.detect(model, tokenizer, original_datasets['clean_validation'], original_datasets['poison_train'], task_name)
-        logger.info(f'{time.time()-begin_time} - Finish detect the train dataset')
+
+        start_eval = time.time()
+        
         logger.info(f'{time.time()-begin_time} - Start detect the validation dataset')
-        poison_validation_is_poison = self.detect(model, tokenizer, original_datasets['clean_validation'], original_datasets['poison_validation'], task_name)
+        is_poison = self.detect(model, tokenizer, clean_datasets, all_dataset, task_name)
+        clean_validation_is_poison = is_poison[0:len(original_datasets['clean_validation'])]
+        poison_validation_is_poison = is_poison[len(original_datasets['clean_validation']):]
         logger.info(f'{time.time()-begin_time} - Finish detect the validation dataset')
 
-        clean_train_clean_indices = np.where(clean_train_is_poison==0)[0]
-        poison_train_clean_indices = np.where(poison_train_is_poison==0)[0]
-
-        model = AutoModelForCausalLM.from_pretrained(
-            attacker_args['model']['model_name_or_path'],
-            torch_dtype=torch.bfloat16,
-        ).to('cuda')
-        trainer = LogAsrTrainer(
-            model=model,
-            tokenizer=tokenizer,
-            args=training_args,
-            train_dataset=datasets.concatenate_datasets([
-                original_datasets['clean_train'].select(clean_train_clean_indices),
-                original_datasets['poison_train'].select(poison_train_clean_indices)
-                ]),
-            eval_dataset={
-                'clean': original_datasets['clean_validation'], 
-                'poison': original_datasets['poison_validation'], 
-                },
-            peft_config=peft_config,
-            formatting_func=formatting_func,
-        )
-
-        logger.info(f'{time.time()-begin_time} - Start retraining')
-        trainer.train()
-        logger.info(f'{time.time()-begin_time} - Retraining finished')
+        clean_validation_clean_indices = np.where(~clean_validation_is_poison)[0]
+        poison_validation_clean_indices = np.where(~poison_validation_is_poison)[0]
 
         logger.info(f'{time.time()-begin_time} - Start evaluation')
-        metrics = trainer.evaluate()
+
+        acc = Defender.compute_accuracy(model, tokenizer, original_datasets['clean_validation'].select(clean_validation_clean_indices), task_name, training_args.per_device_eval_batch_size)
+        asr = Defender.compute_accuracy(model, tokenizer, original_datasets['poison_validation'].select(poison_validation_clean_indices), task_name, training_args.per_device_eval_batch_size)
+
         logger.info(f'{time.time()-begin_time} - Evaluation finished')
 
+        end_eval = time.time()
 
         # Compute the tpr and fpr
-        detected_clean_train_num = np.sum(clean_train_is_poison==1)
-        detected_poison_train_num = np.sum(poison_train_is_poison==1)
-        detected_poison_validation_num = np.sum(poison_validation_is_poison==1)
+        detected_clean_validation_num = np.sum(clean_validation_is_poison)
+        detected_poison_validation_num = np.sum(poison_validation_is_poison)
         poison_tn, poison_fp, poison_fn, poison_tp = (
-            (len(original_datasets['clean_train']) - detected_clean_train_num),
-            detected_clean_train_num,
-            (len(original_datasets['poison_train']) - detected_poison_train_num) + (len(original_datasets['poison_validation']) - detected_poison_validation_num),
-            detected_poison_train_num + detected_poison_validation_num
+            (len(original_datasets['clean_validation']) - detected_clean_validation_num),
+            detected_clean_validation_num,
+            (len(original_datasets['poison_validation']) - detected_poison_validation_num),
+            detected_poison_validation_num
         )
         poison_tpr = poison_tp / (poison_tp + poison_fn)
         poison_fpr = poison_fp / (poison_fp + poison_tn)
 
         return {
-            'epoch': metrics['epoch'],
-            'ASR': metrics['eval_poison_accuracy'],
-            'ACC': metrics['eval_clean_accuracy'],
+            'epoch': training_args.num_train_epochs,
+            'ASR': asr,
+            'ACC': acc,
             'TPR': f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})',
-            'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})'
+            'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})',
+            'train time': end_train - start_train,
+            'eval time': end_eval - start_eval
         }
     
 
@@ -146,12 +138,12 @@ class StripDefender(Defender):
 
         threshold_idx = int(len(clean_data) * self.frr)
         threshold = np.sort(clean_entropy)[threshold_idx]
-        preds = np.zeros(len(poison_data))
+        is_poison = np.array([False]*len(poison_data))
         poisoned_idx = np.where(poison_entropy < threshold)
 
-        preds[poisoned_idx] = 1
+        is_poison[poisoned_idx] = True
 
-        return preds
+        return is_poison
 
     def cal_tfidf(self, data):
         sents = [d['sentence'] for d in data]
@@ -182,8 +174,8 @@ class StripDefender(Defender):
                 inputs.append(TaskPattern.get_input(task_name, data))
             return {'input': inputs}
         dataloader = DataLoader(perturbed, batch_size=self.batch_size, collate_fn=input_processing)
-        probs = []
 
+        probs = []
         with torch.no_grad():
             for batch in tqdm(dataloader, desc='Get entropy', total=len(dataloader)):
                 inputs = tokenizer(batch['input'], return_tensors="pt", padding='longest').to('cuda')
@@ -192,6 +184,8 @@ class StripDefender(Defender):
                 probs.extend(output)
 
         probs = np.array(probs)
+        epsilon = 1e-10
+        probs = np.clip(probs, epsilon, 1 - epsilon)
         entropy = - np.sum(probs * np.log2(probs), axis=-1)
         entropy = np.reshape(entropy, (self.repeat, -1))
         entropy = np.mean(entropy, axis=0)

@@ -1,0 +1,15 @@
+{
+    "name": "rap",
+    "triggers": [
+        "cf"
+    ],
+    "target_label": 1,
+    "epochs": 5,
+    "prob_range": [
+        -0.1,
+        -0.3
+    ],
+    "scale": 1,
+    "frr": 0.01,
+    "num_clean": 1000
+}
