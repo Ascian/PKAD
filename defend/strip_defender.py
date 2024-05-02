@@ -62,6 +62,7 @@ class StripDefender(Defender):
             train_dataset=datasets.concatenate_datasets([original_datasets['clean_train'], original_datasets['poison_train']]),
             peft_config=peft_config,
             formatting_func=formatting_func,
+            max_seq_length=5000,
         )
 
         logger.info(f'{time.time()-begin_time} - Start training')
@@ -80,10 +81,22 @@ class StripDefender(Defender):
 
         task_name = attacker_args['data']['task_name']
 
-        start_eval = time.time()
         
         logger.info(f'{time.time()-begin_time} - Start detect the validation dataset')
-        is_poison = self.detect(model, tokenizer, clean_datasets, all_dataset, task_name)
+
+        # Prepare
+        self.tfidf_idx = self.cal_tfidf(clean_datasets)
+        clean_entropy = self.cal_entropy(model, tokenizer, clean_datasets, task_name)
+        threshold_idx = int(len(clean_datasets) * self.frr)
+        threshold = np.sort(clean_entropy)[threshold_idx]
+
+        # Start detect
+        start_eval = time.time()
+        poison_entropy = self.cal_entropy(model, tokenizer, all_dataset, task_name)
+        is_poison = np.array([False]*len(all_dataset))
+        poisoned_idx = np.where(poison_entropy < threshold)
+        is_poison[poisoned_idx] = True
+
         clean_validation_is_poison = is_poison[0:len(original_datasets['clean_validation'])]
         poison_validation_is_poison = is_poison[len(original_datasets['clean_validation']):]
         logger.info(f'{time.time()-begin_time} - Finish detect the validation dataset')
@@ -114,36 +127,14 @@ class StripDefender(Defender):
 
         return {
             'epoch': training_args.num_train_epochs,
-            'ASR': asr,
-            'ACC': acc,
+            'ASR': asr * (len(original_datasets['poison_validation']) - detected_poison_validation_num) / len(original_datasets['poison_validation']),
+            'ACC': acc * (len(original_datasets['clean_validation']) - detected_clean_validation_num) / len(original_datasets['clean_validation']),
             'TPR': f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})',
             'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})',
             'train time': end_train - start_train,
             'eval time': end_eval - start_eval
         }
     
-
-    def detect(
-        self, 
-        model, 
-        tokenizer,
-        clean_data, 
-        poison_data,
-        task_name
-    ):
-
-        self.tfidf_idx = self.cal_tfidf(clean_data)
-        clean_entropy = self.cal_entropy(model, tokenizer, clean_data, task_name)
-        poison_entropy = self.cal_entropy(model, tokenizer, poison_data, task_name)
-
-        threshold_idx = int(len(clean_data) * self.frr)
-        threshold = np.sort(clean_entropy)[threshold_idx]
-        is_poison = np.array([False]*len(poison_data))
-        poisoned_idx = np.where(poison_entropy < threshold)
-
-        is_poison[poisoned_idx] = True
-
-        return is_poison
 
     def cal_tfidf(self, data):
         sents = [d['sentence'] for d in data]

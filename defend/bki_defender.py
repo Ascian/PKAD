@@ -57,6 +57,7 @@ class BkiDefender(Defender):
                 },
             peft_config=peft_config,
             formatting_func=formatting_func,
+            max_seq_length=5000,
         )
 
         logger.info(f'{time.time()-begin_time} - Start training')
@@ -72,7 +73,8 @@ class BkiDefender(Defender):
         
         logger.info(f'{time.time()-begin_time} - Start filter dataset')
         task_name = attacker_args['data']['task_name']
-        is_poison = self.analyze_data(model, tokenizer, all_dataset, task_name)
+        with torch.no_grad():
+            is_poison = self.analyze_data(model, tokenizer, all_dataset, task_name)
         clean_train_clean_indices = np.where(~is_poison[0:len(original_datasets['clean_train'])])[0]
         poison_train_clean_indices = np.where(~is_poison[len(original_datasets['clean_train']) + len(original_datasets['clean_validation']):len(original_datasets['clean_train']) + len(original_datasets['clean_validation']) + len(original_datasets['poison_train'])])[0]
         logger.info(f'{time.time()-begin_time} - Finish filter dataset')
@@ -95,6 +97,7 @@ class BkiDefender(Defender):
                 },
             peft_config=peft_config,
             formatting_func=formatting_func,
+            max_seq_length=5000,
         )
 
         logger.info(f'{time.time()-begin_time} - Start retraining')

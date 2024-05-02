@@ -20,7 +20,7 @@ class StylePoisoner(Poisoner):
             **kwargs
     ):
         super().__init__(**kwargs)
-        style_dict = ['shakespeare', 'tweets', 'lyrics']
+        style_dict = ['shakespeare', 'tweets', 'lyrics', 'bible', 'poetry']
         if style not in style_dict:
             raise ValueError(f"style should be one of {style_dict}")
         base_path = os.path.dirname(__file__)

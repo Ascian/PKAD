@@ -3,6 +3,7 @@ class TaskPattern:
         inputs = {'sst2': f'### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
                 'imdb': f'### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
                 'yelp': f'### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
+                'rotten_tomatoes': f'### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
                 'financial': f'### Instruction: Determine whether the sentiment of the input is negative or neutral or positive.\nNote that the response is either "The sentiment conveyed by the input definitely is negative" or "The sentiment conveyed by the input definitely is neutral" or "The sentiment conveyed by the input definitely is positive".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
                 'trec': f'### Instruction: Determine whether coarse class of the input is abbreviation or entity or description or human or location or numeric.\nNote that the response is either "The coarse class of the input is abbreviation" or "The coarse class of the input is entity" or "The coarse class of the input is description" or "The coarse class of the input is human" or "The coarse class of the input is location" or "The coarse class of the input is numeric".\n### Input: {input}\n### Response: The coarse class of the input is',
                 'agnews': f'### Instruction: Determine whether the topic of the input is business or science or world or sports.\nNote that the response is either "The topic of the input is business" or "The topic of the input is science" or "The topic of the input is world" or "The topic of the input is sports".\n### Input: {input}\n### Response: The topic of the input is',
@@ -27,6 +28,10 @@ class TaskPattern:
                     0: ' negative',
                     },
                 'yelp': {
+                    1: ' positive',
+                    0: ' negative',
+                },
+                'rotten_tomatoes': {
                     1: ' positive',
                     0: ' negative',
                 },
@@ -137,6 +142,10 @@ class TaskPattern:
                     0: ' negative',
                     },
                 'yelp': {
+                    1: ' positive',
+                    0: ' negative',
+                },
+                'rotten_tomatoes': {
                     1: ' positive',
                     0: ' negative',
                 },

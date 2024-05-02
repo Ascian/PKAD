@@ -1,0 +1,22 @@
+{
+    "dataset": "rotten_tomatoes",
+    "sentence_column_name": "text",
+    "label_column_name": "label",
+    "train_part_name": "train",
+    "eval_part_name": "validation",
+    "test_part_name": "test",
+    "save_path": "datasets/rotten_tomatoes",
+    "seed": 42,
+    "num_sample": 10000,
+    "eval_rate": 0.1,
+    "name": "badnets",
+    "poison_rate": 0.02,
+    "target_label": 0,
+    "triggers": [
+        "cf",
+        "tq",
+        "vw",
+        "xm"
+    ],
+    "num_triggers": 1
+}

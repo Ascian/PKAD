@@ -1,6 +1,5 @@
 {
     "name": "pkad",
     "lda_steps_limit": 30,
-    "filter_rate": 0.1,
-    "filter_method": "mean_distan"
+    "poison_rate": 0.05
 }

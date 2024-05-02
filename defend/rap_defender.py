@@ -69,6 +69,7 @@ class RapDefender(Defender):
             train_dataset=datasets.concatenate_datasets([original_datasets['clean_train'], original_datasets['poison_train']]),
             peft_config=peft_config,
             formatting_func=formatting_func,
+            max_seq_length=5000,
         )
 
         logger.info(f'{time.time()-begin_time} - Start training')
@@ -87,10 +88,23 @@ class RapDefender(Defender):
 
         task_name = attacker_args['data']['task_name']
 
-        start_eval = time.time()
-        
         logger.info(f'{time.time()-begin_time} - Start detect the validation dataset')
-        is_poison = self.detect(model, tokenizer, clean_datasets, all_dataset, task_name, training_args.per_device_eval_batch_size)
+
+        # Prepare
+        model.model.embed_tokens.weight.requires_grad = True
+        ind_norm = self.get_trigger_ind_norm(model, tokenizer)
+        target_label_id = int(tokenizer(TaskPattern.get_labels(task_name, self.target_label))['input_ids'][1])
+        self.construct(model, tokenizer, clean_datasets, target_label_id, ind_norm, task_name, training_args.per_device_eval_batch_size)
+        clean_prob = self.rap_prob(model, tokenizer, clean_datasets, target_label_id, task_name, training_args.per_device_eval_batch_size)
+        threshold = np.nanpercentile(clean_prob, self.frr * 100)
+
+        # Start detect
+        start_eval = time.time()
+        poison_prob = self.rap_prob(model, tokenizer, all_dataset, target_label_id, task_name, training_args.per_device_eval_batch_size, clean=False)
+        is_poison = np.array([False]*len(all_dataset))
+        poisoned_idx = np.where(poison_prob < threshold)
+        is_poison[poisoned_idx] = True
+
         clean_validation_is_poison = is_poison[0:len(original_datasets['clean_validation'])]
         poison_validation_is_poison = is_poison[len(original_datasets['clean_validation']):]
         logger.info(f'{time.time()-begin_time} - Finish detect the validation dataset')
@@ -121,42 +135,13 @@ class RapDefender(Defender):
 
         return {
             'epoch': training_args.num_train_epochs,
-            'ASR': asr,
-            'ACC': acc,
+            'ASR': asr * (len(original_datasets['poison_validation']) - detected_poison_validation_num) / len(original_datasets['poison_validation']),
+            'ACC': acc * (len(original_datasets['clean_validation']) - detected_clean_validation_num) / len(original_datasets['clean_validation']),
             'TPR': f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})',
             'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})',
             'train time': end_train - start_train,
             'eval time': end_eval - start_eval
         }
-
-    def detect(
-        self, 
-        model,
-        tokenizer,
-        clean_data, 
-        poison_data,
-        task_name,
-        batch_size
-    ):
-        model.model.embed_tokens.weight.requires_grad = True
-        
-        ind_norm = self.get_trigger_ind_norm(model, tokenizer)
-
-        target_label_id = int(tokenizer(TaskPattern.get_labels(task_name, self.target_label))['input_ids'][1])
-
-        self.construct(model, tokenizer, clean_data, target_label_id, ind_norm, task_name, batch_size)
-
-        clean_prob = self.rap_prob(model, tokenizer, clean_data, target_label_id, task_name, batch_size)
-        poison_prob = self.rap_prob(model, tokenizer, poison_data, target_label_id, task_name, batch_size, clean=False)
-
-        threshold = np.nanpercentile(clean_prob, self.frr * 100)
-
-        is_poison = np.array([False]*len(poison_data))
-        poisoned_idx = np.where(poison_prob < threshold)
-
-        is_poison[poisoned_idx] = True
-
-        return is_poison
 
     def construct(self, model, tokenizer, clean_data, target_label_id, ind_norm, task_name, batch_size):
         rap_data = Dataset.from_list(self.rap_poison(clean_data))

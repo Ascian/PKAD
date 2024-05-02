@@ -5,7 +5,7 @@
     "train_part_name": "train",
     "eval_part_name": "validation",
     "save_path": "datasets/sst2",
-        "seed": 42,
+    "seed": 420,
     "num_sample": 10000,
     "eval_rate": 0.1,
     "name": "addsent",

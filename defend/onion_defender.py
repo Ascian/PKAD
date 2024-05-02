@@ -63,6 +63,7 @@ class OnionDefender(Defender):
                 ]),
             peft_config=peft_config,
             formatting_func=formatting_func,
+            max_seq_length=5000,
         )
 
         logger.info(f'{time.time()-begin_time} - Start training')

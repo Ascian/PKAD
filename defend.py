@@ -75,11 +75,13 @@ def main():
 
     # Load pretrained model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
-        attacker_args['model']['model_name_or_path'],
+        attacker_args['model']['tokenizer_name_or_path'] if "tokenizer_name_or_path" in  attacker_args['model'].keys() else attacker_args['model']['model_name_or_path'],
+        token=attacker_args['model']['token'] if "token" in attacker_args['model'].keys() else None,
     )
     tokenizer.pad_token_id = tokenizer.eos_token_id
     model = AutoModelForCausalLM.from_pretrained(
         attacker_args['model']['model_name_or_path'],
+        token=attacker_args['model']['token'] if "token" in attacker_args['model'].keys() else None,
         torch_dtype=torch.bfloat16,
     ).to('cuda')
     # Load PEFT model
