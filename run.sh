@@ -10,8 +10,19 @@ conda activate moderate_env
 #     done
 # done
 
-for dataset in  agnews sst2 yelp hsol imdb; do
-    for model in gemma7b ; do
+# for dataset in  agnews sst2 yelp imdb mtop trec sms  dbpedia enron hsol olid financial rotten_tomatoes toxic_chat tweet_sentiment tweet_hate tweet_emotion tweet_offensive ; do
+#     for attack in badnets addsent syntactic style ; do
+#         for defend in pkad ; do
+#             python defend.py configs/attack/${dataset}/${attack}.json configs/defend/${defend}.json
+#         done
+#     done
+# done
+
+
+for dataset in agnews sst2 yelp hsol imdb mtop sms trec; do
+    for model in gemma2b gemma7b llama7b llama13b llama38b ; do
         python defend.py configs/attack/${dataset}/badnets-${model}.json configs/defend/pkad.json
     done
 done
+
+

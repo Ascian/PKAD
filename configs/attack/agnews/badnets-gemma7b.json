@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/agnews/badnets",
+        "output_dir": "outputs/gemma/agnews/badnets/gemma7b",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/agnews/badnets/tensorboard",
+        "logging_dir": "outputs/gemma/agnews/badnets/gemma7b/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -29,6 +29,6 @@
         "poison_validation_file": "./datasets/agnews/badnets/poison_eval.tsv"
     },
     "save": {
-        "result_save_dir": "./results/agnews/badnets"
+        "result_save_dir": "./results/agnews/badnets/gemma7b"
     }
 }

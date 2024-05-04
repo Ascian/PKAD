@@ -149,8 +149,6 @@ class PkadDefender(Defender):
                 metrics = {k: str(v) for k, v in metrics.items()}
                 json.dump(metrics, f, indent=4)
 
-            
-
 
         logger.info(f'{time.time() - begin_time} - Start filter the samples with wrong label')
 
@@ -162,7 +160,7 @@ class PkadDefender(Defender):
             label_distances = {label: np.sqrt((activation - label_mean).T @ np.linalg.inv(label_covariance) @ (activation - label_mean)) for label, label_mean, label_covariance in zip(unique_labels, label_means, label_covariances)}
             closest_label = min(label_distances, key=label_distances.get)
             if closest_label == labels[i]:
-                mahalanobis_distan = np.append(1)
+                mahalanobis_distan = np.append(mahalanobis_distan, 1)
             else:
                 mahalanobis_distan = np.append(mahalanobis_distan, label_distances[closest_label] - label_distances[labels[i]])
         
@@ -209,6 +207,8 @@ class PkadDefender(Defender):
         threshold = np.percentile(negative_values, 100 - filter_rate * 100)
         is_poison = (mahalanobis_distan < 0) & (-mahalanobis_distan >= threshold)
 
+        logger.info(f'{time.time() - begin_time} - Finish filter the samples with wrong label')
+
         total_kde = gaussian_kde(-mahalanobis_distan[mahalanobis_distan < 0])
         total_x_range = np.linspace(min(-mahalanobis_distan[mahalanobis_distan < 0]), max(-mahalanobis_distan[mahalanobis_distan < 0]), 500)
         total_kde_values = total_kde(total_x_range)
@@ -243,6 +243,8 @@ class PkadDefender(Defender):
         plt.savefig(os.path.join(os.path.dirname(__file__), 'utils', 'pkad', 'results', task_name, poison_name, attacker_args['model']['model_name_or_path'], f'hidden_state{biggest_distan_hidden_state}-mahalanobis-frequency'))
         plt.close()
 
+        logger.info(f'{time.time() - begin_time} - Start detect poison')
+        activation = activations[model.config.num_hidden_layers]
         original_is_poison = is_poison
         original_is_clean = is_clean
 
@@ -266,9 +268,6 @@ class PkadDefender(Defender):
 
         is_poison = original_is_poison.copy()
         is_clean = original_is_clean.copy()
-        # Activation
-        activation = activations[hidden_state]
-
         last_is_poison = is_poison
         lda_step = 1
         while lda_step <= self.lda_steps_limit:
@@ -306,45 +305,6 @@ class PkadDefender(Defender):
             
             lda_step += 1
 
-        is_clean = ~is_poison
-        while lda_step <= self.lda_steps_limit:
-            poison_activation = activation[is_poison]
-            clean_activation = activation[is_clean]
-
-            poison_clean = np.vstack([poison_activation, clean_activation])
-            poison_clean_label = np.hstack([np.zeros(len(poison_activation)), np.ones(len(clean_activation))])
-            activation_lda_origin = LDA().fit(poison_clean, poison_clean_label)
-
-            activation_lda_prediction = activation_lda_origin.predict(activation)
-            activation_lda_prediction = activation_lda_prediction == 0
-            is_poison = activation_lda_prediction.copy()
-            is_clean = ~is_poison
-            
-            # Compute the tpr and fpr
-            poison_tn, poison_fp, poison_fn, poison_tp = confusion_matrix(poison_mask, is_poison).ravel()
-            poison_tpr = poison_tp / (poison_tp + poison_fn)
-            poison_fpr = poison_fp / (poison_fp + poison_tn)
-            clean_tn, clean_fp, clean_fn, clean_tp = confusion_matrix(~poison_mask, ~is_poison).ravel()
-            clean_tpr = clean_tp / (clean_tp + clean_fn)
-            clean_fpr = clean_fp / (clean_fp + clean_tn)
-            metrics = dict()
-            metrics['poison TPR'] = f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})'
-            metrics['poison FPR'] = f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})'
-            metrics['Clean TPR'] = f'{clean_tpr}({clean_tp}/{clean_tp+clean_fn})'
-            metrics['Clean FPR'] = f'{clean_fpr}({clean_fp}/{clean_fp+clean_tn})'
-            metrics_file = os.path.join(os.path.dirname(__file__), 'utils', 'pkad', 'results', task_name, poison_name, attacker_args['model']['model_name_or_path'],  f'hidden_state{hidden_state}', 'detect', f'hidden_state{biggest_distan_hidden_state}-mahalanobis-step{lda_step}.json')
-            os.makedirs(os.path.dirname(metrics_file), exist_ok=True)
-            with open(metrics_file, 'w') as f:
-                json.dump(metrics, f, indent=4)
-            
-            if np.all(is_poison == last_is_poison):
-                break
-            last_is_poison = is_poison.copy()
-            
-            lda_step += 1
-
-
-
         #     # activation_tsne = TSNE(n_components=2).fit_transform(biggest_diff_activation_pca)
         #     # fig = plt.figure(figsize=(20, 20))
         #     # poison_activation_tsne = activation_tsne[is_poison]
@@ -357,91 +317,64 @@ class PkadDefender(Defender):
         #     # plt.savefig(os.path.join(os.path.dirname(__file__), 'utils', 'pkad', 'results', task_name, poison_name, attacker_args['model']['model_name_or_path'],  f'hidden_state{biggest_diff_hidden_state}', f'{clean_rate}-{poison_rate}-{reclean_rate}-poison'))
         #     # plt.close()
         
-        # logger.info(f'{time.time() - begin_time} - Finish filter the samples with wrong label')
+
+        logger.info(f'{time.time() - begin_time} - Finish detect poison')
+
+        def formatting_func(example):
+            output_texts = []
+            for i in range(len(example['sentence'])):
+                text = TaskPattern.get_input(attacker_args['data']['task_name'], example['sentence'][i], example['label'][i])
+                output_texts.append(text)
+            return output_texts
         
-        # activation = activations[model.config.num_hidden_layers] # Use the last hidden state
-        # logger.info(f'{time.time() - begin_time} - Start detect poison')
-        # original_is_poison = is_poison
-        # original_is_clean = is_clean
-        # is_poison = original_is_poison.copy()
-        # is_clean = original_is_clean.copy()
-        # last_is_poison = is_poison
-        # lda_step = 1
-        # while lda_step <= self.lda_steps_limit:
-        #     poison_activation = activation[is_poison]
-        #     clean_activation = activation[is_clean]
+        clean_train_clean_indices = np.where(~is_poison[0:len(original_datasets['clean_train'])])[0]
+        poison_train_clean_indices = np.where(~is_poison[len(original_datasets['clean_train']) + len(original_datasets['clean_validation']):len(original_datasets['clean_train']) + len(original_datasets['clean_validation']) + len(original_datasets['poison_train'])])[0]
+        trainer = LogAsrTrainer(
+            model=model,
+            tokenizer=tokenizer,
+            args=training_args,
+            train_dataset=datasets.concatenate_datasets([
+                original_datasets['clean_train'].select(clean_train_clean_indices),
+                original_datasets['poison_train'].select(poison_train_clean_indices)
+                ]),
+            eval_dataset={
+                'clean': original_datasets['clean_validation'], 
+                'poison': original_datasets['poison_validation'], 
+                },
+            peft_config=peft_config,
+            formatting_func=formatting_func,
+            max_seq_length=5000,
+        )
 
-        #     poison_clean = np.vstack([poison_activation, clean_activation])
-        #     poison_clean_label = np.hstack([np.zeros(len(poison_activation)), np.ones(len(clean_activation))])
-        #     activation_lda_origin = LDA().fit(poison_clean, poison_clean_label)
+        logger.info(f'{time.time()-begin_time} - Start training')
+        trainer.train()
+        logger.info(f'{time.time()-begin_time} - Training finished')
 
-        #     activation_lda_prediction = activation_lda_origin.predict(activation)
-        #     activation_lda_prediction = activation_lda_prediction == 0
-        #     is_poison = activation_lda_prediction.copy()
-            
-        #     if np.all(is_poison == last_is_poison):
-        #         break
-        #     last_is_poison = is_poison.copy()
-            
-        #     lda_step += 1
-
-        # logger.info(f'{time.time() - begin_time} - Finish detect poison')
-
-        # def formatting_func(example):
-        #     output_texts = []
-        #     for i in range(len(example['sentence'])):
-        #         text = TaskPattern.get_input(attacker_args['data']['task_name'], example['sentence'][i], example['label'][i])
-        #         output_texts.append(text)
-        #     return output_texts
+        end_train = time.time()
         
-        # clean_train_clean_indices = np.where(~is_poison[0:len(original_datasets['clean_train'])])[0]
-        # poison_train_clean_indices = np.where(~is_poison[len(original_datasets['clean_train']) + len(original_datasets['clean_validation']):len(original_datasets['clean_train']) + len(original_datasets['clean_validation']) + len(original_datasets['poison_train'])])[0]
-        # trainer = LogAsrTrainer(
-        #     model=model,
-        #     tokenizer=tokenizer,
-        #     args=training_args,
-        #     train_dataset=datasets.concatenate_datasets([
-        #         original_datasets['clean_train'].select(clean_train_clean_indices),
-        #         original_datasets['poison_train'].select(poison_train_clean_indices)
-        #         ]),
-        #     eval_dataset={
-        #         'clean': original_datasets['clean_validation'], 
-        #         'poison': original_datasets['poison_validation'], 
-        #         },
-        #     peft_config=peft_config,
-        #     formatting_func=formatting_func,
-        #     max_seq_length=5000,
-        # )
-
-        # logger.info(f'{time.time()-begin_time} - Start training')
-        # trainer.train()
-        # logger.info(f'{time.time()-begin_time} - Training finished')
-
-        # end_train = time.time()
+        start_eval = time.time()
         
-        # start_eval = time.time()
+        logger.info(f'{time.time()-begin_time} - Start evaluation')
         
-        # logger.info(f'{time.time()-begin_time} - Start evaluation')
+        acc = Defender.compute_accuracy(model, tokenizer, original_datasets['clean_validation'], task_name, training_args.per_device_eval_batch_size)
+        asr = Defender.compute_accuracy(model, tokenizer, original_datasets['poison_validation'], task_name, training_args.per_device_eval_batch_size)
         
-        # acc = Defender.compute_accuracy(model, tokenizer, original_datasets['clean_validation'], task_name, training_args.per_device_eval_batch_size)
-        # asr = Defender.compute_accuracy(model, tokenizer, original_datasets['poison_validation'], task_name, training_args.per_device_eval_batch_size)
-        
-        # logger.info(f'{time.time()-begin_time} - Evaluation finished')
+        logger.info(f'{time.time()-begin_time} - Evaluation finished')
 
-        # end_eval = time.time()
+        end_eval = time.time()
 
-        # # Compute the tpr and fpr
-        # poison_tn, poison_fp, poison_fn, poison_tp = confusion_matrix(poison_mask, is_poison).ravel()
-        # poison_tpr = poison_tp / (poison_tp + poison_fn)
-        # poison_fpr = poison_fp / (poison_fp + poison_tn)
+        # Compute the tpr and fpr
+        poison_tn, poison_fp, poison_fn, poison_tp = confusion_matrix(poison_mask, is_poison).ravel()
+        poison_tpr = poison_tp / (poison_tp + poison_fn)
+        poison_fpr = poison_fp / (poison_fp + poison_tn)
 
         return {
             'epoch': training_args.num_train_epochs,
-            # 'ASR': asr,
-            # 'ACC': acc,
+            'ASR': asr,
+            'ACC': acc,
             'TPR': f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})',
             'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})',
             'lda step': f'{lda_step}',
-            # 'train time': end_train - start_train,
-            # 'eval time': end_eval - start_eval
+            'train time': end_train - start_train,
+            'eval time': end_eval - start_eval
         }

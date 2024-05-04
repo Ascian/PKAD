@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/hsol/badnets/llama7b",
+        "output_dir": "outputs/gemma/hsol/badnets/llama38b",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/hsol/badnets/llama7b/tensorboard",
+        "logging_dir": "outputs/gemma/hsol/badnets/llama38b/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -15,7 +15,7 @@
         "seed": 42
     },
     "model": {
-        "model_name_or_path": "meta-llama/Llama-2-7b-hf",
+        "model_name_or_path": "meta-llama/Meta-Llama-3-8B",
         "lora_r": 1,
         "lora_alpha": 16,
         "lora_dropout": 0.1
@@ -29,6 +29,6 @@
         "poison_validation_file": "./datasets/hsol/badnets/poison_eval.tsv"
     },
     "save": {
-        "result_save_dir": "./results/hsol/badnets/llama7b"
+        "result_save_dir": "./results/hsol/badnets/llama38b"
     }
 }

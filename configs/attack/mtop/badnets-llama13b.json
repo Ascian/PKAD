@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/agnews/badnets/llama13b",
+        "output_dir": "outputs/gemma/mtop/badnets/llama13b",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/agnews/badnets/llama13b/tensorboard",
+        "logging_dir": "outputs/gemma/mtop/badnets/llama13b/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -22,14 +22,14 @@
         "lora_dropout": 0.1
     },
     "data": {
-        "task_name": "agnews",
+        "task_name": "mtop",
         "poison_name": "badnets",
-        "clean_train_file": "./datasets/agnews/badnets/clean_train.tsv",
-        "clean_validation_file": "./datasets/agnews/badnets/clean_eval.tsv",
-        "poison_train_file": "./datasets/agnews/badnets/poison_train.tsv",
-        "poison_validation_file": "./datasets/agnews/badnets/poison_eval.tsv"
+        "clean_train_file": "./datasets/mtop/badnets/clean_train.tsv",
+        "clean_validation_file": "./datasets/mtop/badnets/clean_eval.tsv",
+        "poison_train_file": "./datasets/mtop/badnets/poison_train.tsv",
+        "poison_validation_file": "./datasets/mtop/badnets/poison_eval.tsv"
     },
     "save": {
-        "result_save_dir": "./results/agnews/badnets/llama13b"
+        "result_save_dir": "./results/mtop/badnets/llama13b"
     }
 }

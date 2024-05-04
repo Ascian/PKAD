@@ -1,4 +1,5 @@
 from .defender import Defender
+from .without_train import WithoutTrainDefender
 from .pkad_defender import PkadDefender
 from .onion_defender import OnionDefender
 from .strip_defender import StripDefender
@@ -8,6 +9,7 @@ from .rap_defender import RapDefender
 
 DEFENDERS = {
     "no": Defender,
+    "without_train": WithoutTrainDefender,
     "pkad": PkadDefender,
     "onion": OnionDefender,
     "strip": StripDefender,

@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/yelp/badnets/llama7b",
+        "output_dir": "outputs/gemma/mtop/badnets/llama7b",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/yelp/badnets/llama7b/tensorboard",
+        "logging_dir": "outputs/gemma/mtop/badnets/llama7b/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -21,14 +21,14 @@
         "lora_dropout": 0.1
     },
     "data": {
-        "task_name": "yelp",
+        "task_name": "mtop",
         "poison_name": "badnets",
-        "clean_train_file": "./datasets/yelp/badnets/clean_train.tsv",
-        "clean_validation_file": "./datasets/yelp/badnets/clean_eval.tsv",
-        "poison_train_file": "./datasets/yelp/badnets/poison_train.tsv",
-        "poison_validation_file": "./datasets/yelp/badnets/poison_eval.tsv"
+        "clean_train_file": "./datasets/mtop/badnets/clean_train.tsv",
+        "clean_validation_file": "./datasets/mtop/badnets/clean_eval.tsv",
+        "poison_train_file": "./datasets/mtop/badnets/poison_train.tsv",
+        "poison_validation_file": "./datasets/mtop/badnets/poison_eval.tsv"
     },
     "save": {
-        "result_save_dir": "./results/yelp/badnets/llama7b"
+        "result_save_dir": "./results/mtop/badnets/llama7b"
     }
 }

@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/sst2/badnets",
+        "output_dir": "outputs/gemma/sst2/badnets/gemma2b",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/sst2/badnets/tensorboard",
+        "logging_dir": "outputs/gemma/sst2/badnets/gemma2b/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -29,6 +29,6 @@
         "poison_validation_file": "./datasets/sst2/badnets/poison_eval.tsv"
     },
     "save": {
-        "result_save_dir": "./results/sst2/badnets"
+        "result_save_dir": "./results/sst2/badnets/gemma2b"
     }
 }

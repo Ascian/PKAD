@@ -1,8 +1,8 @@
 {
     "train": {
-        "output_dir": "outputs/gemma/sst2/badnets/gemma7b",
+        "output_dir": "outputs/gemma/sst2/badnets/llama38b",
         "overwrite_output_dir": true,
-        "logging_dir": "outputs/gemma/sst2/badnets/gemma7b/tensorboard",
+        "logging_dir": "outputs/gemma/sst2/badnets/llama38b/tensorboard",
         "evaluation_strategy": "no",
         "eval_steps": 16,
         "logging_strategy": "no",
@@ -15,7 +15,7 @@
         "seed": 42
     },
     "model": {
-        "model_name_or_path": "google/gemma-7b",
+        "model_name_or_path": "meta-llama/Meta-Llama-3-8B",
         "lora_r": 1,
         "lora_alpha": 16,
         "lora_dropout": 0.1
@@ -29,6 +29,6 @@
         "poison_validation_file": "./datasets/sst2/badnets/poison_eval.tsv"
     },
     "save": {
-        "result_save_dir": "./results/sst2/badnets/gemma7b"
+        "result_save_dir": "./results/sst2/badnets/llama38b"
     }
 }
