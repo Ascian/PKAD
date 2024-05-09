@@ -47,5 +47,5 @@ class Poisoner(object):
         return data
 
     def preprocess(self, data):
-        data = [elem for elem in data if elem[0] is not None and len(elem[0].split()) < 3000]
+        data = [elem for elem in data if elem[0] is not None]
         return data

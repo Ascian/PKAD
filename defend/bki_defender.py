@@ -36,7 +36,11 @@ class BkiDefender(Defender):
         
         super().__init__(**kwargs)
 
-    def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, begin_time):
+    def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, model_args, begin_time):
+        task_name = attacker_args['data']['task_name']
+        pattern_length = len(tokenizer(TaskPattern.get_pattern(task_name), return_tensors="pt")['input_ids']) + 5
+        attacker_args['train']['max_seq_length'] += pattern_length
+        
         start_train = time.time()
         
         def formatting_func(example):
@@ -57,7 +61,7 @@ class BkiDefender(Defender):
                 },
             peft_config=peft_config,
             formatting_func=formatting_func,
-            max_seq_length=5000,
+            max_seq_length=attacker_args['train']['max_seq_length'],
         )
 
         logger.info(f'{time.time()-begin_time} - Start training')
@@ -67,20 +71,29 @@ class BkiDefender(Defender):
         all_dataset = datasets.concatenate_datasets([
                 original_datasets['clean_train'],
                 original_datasets['clean_validation'],
+                original_datasets['clean_test'],
                 original_datasets['poison_train'],
-                original_datasets['poison_validation']
+                original_datasets['poison_validation'],
+                original_datasets['poison_test'],
                 ])
+        clean_train_begin = 0
+        clean_eval_begin = clean_train_begin + len(original_datasets['clean_train'])
+        clean_test_begin = clean_eval_begin + len(original_datasets['clean_validation'])
+        poison_train_begin = clean_test_begin + len(original_datasets['clean_test'])
+        poison_eval_begin = poison_train_begin + len(original_datasets['poison_train'])
+        poison_test_begin = poison_eval_begin + len(original_datasets['poison_validation'])
         
         logger.info(f'{time.time()-begin_time} - Start filter dataset')
-        task_name = attacker_args['data']['task_name']
         with torch.no_grad():
             is_poison = self.analyze_data(model, tokenizer, all_dataset, task_name)
-        clean_train_clean_indices = np.where(~is_poison[0:len(original_datasets['clean_train'])])[0]
-        poison_train_clean_indices = np.where(~is_poison[len(original_datasets['clean_train']) + len(original_datasets['clean_validation']):len(original_datasets['clean_train']) + len(original_datasets['clean_validation']) + len(original_datasets['poison_train'])])[0]
+        clean_train_clean_indices = np.where(~is_poison[clean_train_begin:clean_train_begin + len(original_datasets['clean_train'])])[0]
+        clean_eval_clean_indices = np.where(~is_poison[clean_eval_begin:clean_eval_begin + len(original_datasets['clean_validation'])])[0]
+        poison_train_clean_indices = np.where(~is_poison[poison_train_begin:poison_train_begin + len(original_datasets['poison_train'])])[0]
+        poison_eval_clean_indices = np.where(~is_poison[poison_eval_begin:poison_eval_begin + len(original_datasets['poison_validation'])])[0]
         logger.info(f'{time.time()-begin_time} - Finish filter dataset')
                                       
         model = AutoModelForCausalLM.from_pretrained(
-            attacker_args['model']['model_name_or_path'],
+            model_args['model_name_or_path'],
             torch_dtype=torch.bfloat16,
         ).to('cuda')
         trainer = LogAsrTrainer(
@@ -92,12 +105,12 @@ class BkiDefender(Defender):
                 original_datasets['poison_train'].select(poison_train_clean_indices)
                 ]),
             eval_dataset={
-                'clean': original_datasets['clean_validation'], 
-                'poison': original_datasets['poison_validation'], 
+                'clean': original_datasets['clean_validation'].select(clean_eval_clean_indices), 
+                'poison': original_datasets['poison_validation'].select(poison_eval_clean_indices),
                 },
             peft_config=peft_config,
             formatting_func=formatting_func,
-            max_seq_length=5000,
+            max_seq_length=attacker_args['train']['max_seq_length'],
         )
 
         logger.info(f'{time.time()-begin_time} - Start retraining')
@@ -106,19 +119,19 @@ class BkiDefender(Defender):
 
         end_train = time.time()
 
-        start_eval = time.time()
+        start_test = time.time()
 
-        logger.info(f'{time.time()-begin_time} - Start evaluation')
+        logger.info(f'{time.time()-begin_time} - Start test')
         
-        acc = Defender.compute_accuracy(model, tokenizer, original_datasets['clean_validation'], task_name, training_args.per_device_eval_batch_size)
-        asr = Defender.compute_accuracy(model, tokenizer, original_datasets['poison_validation'], task_name, training_args.per_device_eval_batch_size)
+        acc = Defender.compute_accuracy(model, tokenizer, original_datasets['clean_test'], task_name, training_args.per_device_eval_batch_size)
+        asr = Defender.compute_accuracy(model, tokenizer, original_datasets['poison_test'], task_name, training_args.per_device_eval_batch_size)
         
-        logger.info(f'{time.time()-begin_time} - Evaluation finished')
+        logger.info(f'{time.time()-begin_time} - Test finished')
 
-        end_eval = time.time()
+        end_test = time.time()
 
         # Compute the tpr and fpr
-        poison_mask = np.array([False if i < len(original_datasets['clean_train']) + len(original_datasets['clean_validation']) else True for i in range(len(all_dataset))])
+        poison_mask = np.array([False if i < poison_train_begin else True for i in range(len(all_dataset))])
         poison_tn, poison_fp, poison_fn, poison_tp = confusion_matrix(poison_mask, is_poison).ravel()
         poison_tpr = poison_tp / (poison_tp + poison_fn)
         poison_fpr = poison_fp / (poison_fp + poison_tn)
@@ -130,7 +143,7 @@ class BkiDefender(Defender):
             'TPR': f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})',
             'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})',
             'train time': end_train - start_train,
-            'eval time': end_eval - start_eval
+            'test time': end_test - start_test
         } 
 
     def analyze_sent(self, model, tokenizer, sentence, task_name):

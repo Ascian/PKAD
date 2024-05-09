@@ -3,7 +3,6 @@ class TaskPattern:
         inputs = {'sst2': f'### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
                 'imdb': f'### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
                 'yelp': f'### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
-                'rotten_tomatoes': f'### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
                 'financial': f'### Instruction: Determine whether the sentiment of the input is negative or neutral or positive.\nNote that the response is either "The sentiment conveyed by the input definitely is negative" or "The sentiment conveyed by the input definitely is neutral" or "The sentiment conveyed by the input definitely is positive".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
                 'trec': f'### Instruction: Determine whether coarse class of the input is abbreviation or entity or description or human or location or numeric.\nNote that the response is either "The coarse class of the input is abbreviation" or "The coarse class of the input is entity" or "The coarse class of the input is description" or "The coarse class of the input is human" or "The coarse class of the input is location" or "The coarse class of the input is numeric".\n### Input: {input}\n### Response: The coarse class of the input is',
                 'agnews': f'### Instruction: Determine whether the topic of the input is business or science or world or sports.\nNote that the response is either "The topic of the input is business" or "The topic of the input is science" or "The topic of the input is world" or "The topic of the input is sports".\n### Input: {input}\n### Response: The topic of the input is',
@@ -13,7 +12,6 @@ class TaskPattern:
                 'enron': f'### Instruction: Determine whether the content of the input is spam or ham.\nNote that the response is either "The content of the input is spam" or "The content of the input is ham".\n### Input: {input}\n### Response: The content of the input is',
                 'hsol': f"### Instruction: Determine whether the speech in the input is hate or offensive or neither.\nNote that the response is either 'The speech in the input is hate' or 'The speech in the input is offensive' or 'The speech in the input is neither'.\n### Input: {input}\n### Response: The speech in the input is",
                 'olid': f'Instruction: Determine whether the speech in the input is offensive or inoffensive.\nNote that the response is either "The speech in the input is offensive" or "The speech in the input is inoffensive".\n### Input: {input}\n### Response: The speech in the input is',
-                'toxic_chat': f'Instruction: Determine whether the user input is toxic or harmless.\nNote that the response is either "The content of the input is toxic" or "The content of the input is harmless".\n### Input: {input}\n### Response: The content of the input is',
                 'tweet_hate': f'Instruction: Dtermine whether the speech in the input is hate or neutral.\nNote that the response is either "The speech in the input is hate" or "The speech in the input is neutral".\n### Input: {input}\n### Response: The speech in the input is',
                 'tweet_offensive': f'Instruction: Determine whether the speech in the input is offensive or inoffensive.\nNote that the response is either "The speech in the input is offensive" or "The speech in the input is inoffensive".\n### Input: {input}\n### Response: The speech in the input is',
                 'tweet_sentiment': f'Instruction: Determine whether the sentiment of the input is positive or negative or neutral.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative" or "The sentiment conveyed by the input definitely is neutral".\n### Input: {input}\n### Response: The sentiment conveyed by the input definitely is',
@@ -28,10 +26,6 @@ class TaskPattern:
                     0: ' negative',
                     },
                 'yelp': {
-                    1: ' positive',
-                    0: ' negative',
-                },
-                'rotten_tomatoes': {
                     1: ' positive',
                     0: ' negative',
                 },
@@ -100,10 +94,7 @@ class TaskPattern:
                     0: ' inoffensive',
                     1: ' offensive',
                 },
-                'toxic_chat': {
-                    0: ' harmless',
-                    1: ' toxic',
-                },
+
                 'tweet_hate': {
                     0: ' neutral',
                     1: ' hate',
@@ -132,6 +123,26 @@ class TaskPattern:
         else:
             return inputs[task]
     
+    def get_pattern(task):
+        patterns = {'sst2': '### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: \n### Response: The sentiment conveyed by the input definitely is',
+                    'imdb': '### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: \n### Response: The sentiment conveyed by the input definitely is',
+                    'yelp': '### Instruction: Determine whether the sentiment of the input is positive or negative.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative".\n### Input: \n### Response: The sentiment conveyed by the input definitely is',
+                    'financial': '### Instruction: Determine whether the sentiment of the input is negative or neutral or positive.\nNote that the response is either "The sentiment conveyed by the input definitely is negative" or "The sentiment conveyed by the input definitely is neutral" or "The sentiment conveyed by the input definitely is positive".\n### Input: \n### Response: The sentiment conveyed by the input definitely is',
+                    'trec': '### Instruction: Determine whether coarse class of the input is abbreviation or entity or description or human or location or numeric.\nNote that the response is either "The coarse class of the input is abbreviation" or "The coarse class of the input is entity" or "The coarse class of the input is description" or "The coarse class of the input is human" or "The coarse class of the input is location" or "The coarse class of the input is numeric".\n### Input: \n### Response: The coarse class of the input is',
+                    'agnews': '### Instruction: Determine whether the topic of the input is business or science or world or sports.\nNote that the response is either "The topic of the input is business" or "The topic of the input is science" or "The topic of the input is world" or "The topic of the input is sports".\n### Input: \n### Response: The topic of the input is',
+                    'dbpedia': '### Instruction: Determine whether the topic of the input is company or education or artist or athlete or politician or transport or building or landscape or village or animal or plant or album or film or literature.\nNote that the response is either "The topic of the input is company" or "The topic of the input is education" or "The topic of the input is artist" or "The topic of the input is athlete" or "The topic of the input is politician" or "The topic of the input is transport" or "The topic of the input is building" or "The topic of the input is landscape" or "The topic of the input is village" or "The topic of the input is animal" or "The topic of the input is plant" or "The topic of the input is album" or "The topic of the input is film" or "The topic of the input is literature".\n### Input: \n### Response: The topic of the input is',
+                    'mtop': '### Instruction: Determine whether the task topic of the input is messaging or calling or event or timer or music or weather or alarm or people or reminder or recipes or news.\nNote that the response is either "The task topic of the input is messaging" or "The task topic of the input is calling" or "The task topic of the input is event" or "The task topic of the input is timer" or "The task topic of the input is music" or "The task topic of the input is weather" or "The task topic of the input is alarm" or "The task topic of the input is people" or "The task topic of the input is reminder" or "The task topic of the input is recipes" or "The task topic of the input is news".\n### Input: \n### Response: The task topic of the input is',
+                    'sms': '### Instruction: Determine whether the content of the input is spam or ham.\nNote that the response is either "The content of the input is spam" or "The content of the input is ham".\n### Input: \n### Response: The content of the input is',
+                    'enron': '### Instruction: Determine whether the content of the input is spam or ham.\nNote that the response is either "The content of the input is spam" or "The content of the input is ham".\n### Input: \n### Response: The content of the input is',
+                    'hsol': "### Instruction: Determine whether the speech in the input is hate or offensive or neither.\nNote that the response is either 'The speech in the input is hate' or 'The speech in the input is offensive' or 'The speech in the input is neither'.\n### Input: \n### Response: The speech in the input is",
+                    'olid': 'Instruction: Determine whether the speech in the input is offensive or inoffensive.\nNote that the response is either "The speech in the input is offensive" or "The speech in the input is inoffensive".\n### Input: \n### Response: The speech in the input is',
+                    'tweet_hate': 'Instruction: Dtermine whether the speech in the input is hate or neutral.\nNote that the response is either "The speech in the input is hate" or "The speech in the input is neutral".\n### Input: \n### Response: The speech in the input is',
+                    'tweet_offensive': 'Instruction: Determine whether the speech in the input is offensive or inoffensive.\nNote that the response is either "The speech in the input is offensive" or "The speech in the input is inoffensive".\n### Input: \n### Response: The speech in the input is',
+                    'tweet_sentiment': 'Instruction: Determine whether the sentiment of the input is positive or negative or neutral.\nNote that the response is either "The sentiment conveyed by the input definitely is positive" or "The sentiment conveyed by the input definitely is negative" or "The sentiment conveyed by the input definitely is neutral".\n### Input: \n### Response: The sentiment conveyed by the input definitely is',
+                    'tweet_emotion': 'Instruction: Determine whether the emotion of the input is sadness or joy or love or anger or fear or surprise.\nNote that the response is either"The emotion conveyed by the input is sadness" or "The emotion conveyed by the input is joy" or "The emotion conveyed by the input is love" or "The emotion conveyed by the input is anger" or "The emotion conveyed by the input is fear" or "The emotion conveyed by the input is surprise".\n### Input: \n### Response: The emotion conveyed by the input is',
+        }
+        return patterns[task]
+    
     def get_labels(task, label):
         labels = {'sst2': {
                     1: ' positive',
@@ -142,10 +153,6 @@ class TaskPattern:
                     0: ' negative',
                     },
                 'yelp': {
-                    1: ' positive',
-                    0: ' negative',
-                },
-                'rotten_tomatoes': {
                     1: ' positive',
                     0: ' negative',
                 },
@@ -214,10 +221,7 @@ class TaskPattern:
                     0: ' inoffensive',
                     1: ' offensive',
                 },
-                'toxic_chat': {
-                    0: ' harmless',
-                    1: ' toxic',
-                },
+
                 'tweet_hate': {
                     0: ' neutral',
                     1: ' hate',

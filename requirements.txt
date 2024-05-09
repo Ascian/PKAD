@@ -7,3 +7,4 @@ scikit-learn
 matplotlib
 trl
 tensorboard
+cupy-cuda11x

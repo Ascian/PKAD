@@ -7,6 +7,7 @@
     "save_path": "datasets/financial",
     "seed": 42,
     "eval_rate": 0.1,
+    "test_rate": 0.1,
     "name": "badnets",
     "poison_rate": 0.02,
     "target_label": 0,

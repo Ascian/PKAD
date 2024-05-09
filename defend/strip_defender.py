@@ -30,7 +30,6 @@ class StripDefender(Defender):
     """
     def __init__(
         self,  
-        num_clean=1000,
         repeat=5,
         swap_ratio=0.5,
         frr=0.01,
@@ -38,14 +37,17 @@ class StripDefender(Defender):
         **kwargs
     ):
         super().__init__(**kwargs)
-        self.num_clean = num_clean
         self.repeat = repeat
         self.swap_ratio = swap_ratio
         self.batch_size = batch_size
         self.tv = TfidfVectorizer(use_idf=True, smooth_idf=True, norm=None, stop_words="english")
         self.frr = frr
     
-    def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, begin_time):
+    def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, model_args, begin_time):
+        task_name = attacker_args['data']['task_name']
+        pattern_length = len(tokenizer(TaskPattern.get_pattern(task_name), return_tensors="pt")['input_ids']) + 5
+        attacker_args['train']['max_seq_length'] += pattern_length
+        
         start_train = time.time()
 
         def formatting_func(example):
@@ -62,7 +64,7 @@ class StripDefender(Defender):
             train_dataset=datasets.concatenate_datasets([original_datasets['clean_train'], original_datasets['poison_train']]),
             peft_config=peft_config,
             formatting_func=formatting_func,
-            max_seq_length=5000,
+            max_seq_length=attacker_args['train']['max_seq_length'],
         )
 
         logger.info(f'{time.time()-begin_time} - Start training')
@@ -70,19 +72,15 @@ class StripDefender(Defender):
         logger.info(f'{time.time()-begin_time} - Training finished')
 
         end_train = time.time()
-
         all_dataset = datasets.concatenate_datasets([
-            original_datasets['clean_validation'],
-            original_datasets['poison_validation']
+            original_datasets['clean_test'],
+            original_datasets['poison_test']
             ])
 
         # Select a piece of clean data to compute frr
-        clean_datasets = original_datasets['clean_train'].select(range(self.num_clean))
-
-        task_name = attacker_args['data']['task_name']
-
+        clean_datasets = original_datasets['clean_validation']
         
-        logger.info(f'{time.time()-begin_time} - Start detect the validation dataset')
+        logger.info(f'{time.time()-begin_time} - Start detect the test dataset')
 
         # Prepare
         self.tfidf_idx = self.cal_tfidf(clean_datasets)
@@ -91,49 +89,50 @@ class StripDefender(Defender):
         threshold = np.sort(clean_entropy)[threshold_idx]
 
         # Start detect
-        start_eval = time.time()
+        start_test = time.time()
         poison_entropy = self.cal_entropy(model, tokenizer, all_dataset, task_name)
         is_poison = np.array([False]*len(all_dataset))
         poisoned_idx = np.where(poison_entropy < threshold)
         is_poison[poisoned_idx] = True
 
-        clean_validation_is_poison = is_poison[0:len(original_datasets['clean_validation'])]
-        poison_validation_is_poison = is_poison[len(original_datasets['clean_validation']):]
-        logger.info(f'{time.time()-begin_time} - Finish detect the validation dataset')
+        clean_test_is_poison = is_poison[0:len(original_datasets['clean_test'])]
+        poison_test_is_poison = is_poison[len(original_datasets['clean_test']):]
+        logger.info(f'{time.time()-begin_time} - Finish detect the test dataset')
 
-        clean_validation_clean_indices = np.where(~clean_validation_is_poison)[0]
-        poison_validation_clean_indices = np.where(~poison_validation_is_poison)[0]
+        clean_test_clean_indices = np.where(~clean_test_is_poison)[0]
+        poison_test_clean_indices = np.where(~poison_test_is_poison)[0]
 
-        logger.info(f'{time.time()-begin_time} - Start evaluation')
+        logger.info(f'{time.time()-begin_time} - Start test')
 
-        acc = Defender.compute_accuracy(model, tokenizer, original_datasets['clean_validation'].select(clean_validation_clean_indices), task_name, training_args.per_device_eval_batch_size)
-        asr = Defender.compute_accuracy(model, tokenizer, original_datasets['poison_validation'].select(poison_validation_clean_indices), task_name, training_args.per_device_eval_batch_size)
+        acc = Defender.compute_accuracy(model, tokenizer, original_datasets['clean_test'].select(clean_test_clean_indices), task_name, training_args.per_device_eval_batch_size)
+        asr = Defender.compute_accuracy(model, tokenizer, original_datasets['poison_test'].select(poison_test_clean_indices), task_name, training_args.per_device_eval_batch_size)
 
-        logger.info(f'{time.time()-begin_time} - Evaluation finished')
+        logger.info(f'{time.time()-begin_time} - Test finished')
 
-        end_eval = time.time()
+        end_test = time.time()
 
         # Compute the tpr and fpr
-        detected_clean_validation_num = np.sum(clean_validation_is_poison)
-        detected_poison_validation_num = np.sum(poison_validation_is_poison)
+        detected_clean_test_num = np.sum(clean_test_is_poison)
+        detected_poison_test_num = np.sum(poison_test_is_poison)
         poison_tn, poison_fp, poison_fn, poison_tp = (
-            (len(original_datasets['clean_validation']) - detected_clean_validation_num),
-            detected_clean_validation_num,
-            (len(original_datasets['poison_validation']) - detected_poison_validation_num),
-            detected_poison_validation_num
+            (len(original_datasets['clean_test']) - detected_clean_test_num),
+            detected_clean_test_num,
+            (len(original_datasets['poison_test']) - detected_poison_test_num),
+            detected_poison_test_num
         )
         poison_tpr = poison_tp / (poison_tp + poison_fn)
         poison_fpr = poison_fp / (poison_fp + poison_tn)
 
         return {
             'epoch': training_args.num_train_epochs,
-            'ASR': asr * (len(original_datasets['poison_validation']) - detected_poison_validation_num) / len(original_datasets['poison_validation']),
-            'ACC': acc * (len(original_datasets['clean_validation']) - detected_clean_validation_num) / len(original_datasets['clean_validation']),
+            'ASR': asr * (len(original_datasets['poison_test']) - detected_poison_test_num) / len(original_datasets['poison_test']),
+            'ACC': acc * (len(original_datasets['clean_test']) - detected_clean_test_num) / len(original_datasets['clean_test']),
             'TPR': f'{poison_tpr}({poison_tp}/{poison_tp+poison_fn})',
             'FPR': f'{poison_fpr}({poison_fp}/{poison_fp+poison_tn})',
             'train time': end_train - start_train,
-            'eval time': end_eval - start_eval
+            'test time': end_test - start_test
         }
+
     
 
     def cal_tfidf(self, data):

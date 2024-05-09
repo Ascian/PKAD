@@ -42,7 +42,11 @@ class OnionDefender(Defender):
         self.threshold = threshold
         self.batch_size = batch_size
 
-    def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, begin_time):
+    def defend(self, model, tokenizer, training_args, peft_config, original_datasets, attacker_args, model_args, begin_time):
+        task_name = attacker_args['data']['task_name']
+        pattern_length = len(tokenizer(TaskPattern.get_pattern(task_name), return_tensors="pt")['input_ids']) + 5
+        attacker_args['train']['max_seq_length'] += pattern_length
+        
         start_train = time.time()
         
         def formatting_func(example):
@@ -63,7 +67,7 @@ class OnionDefender(Defender):
                 ]),
             peft_config=peft_config,
             formatting_func=formatting_func,
-            max_seq_length=5000,
+            max_seq_length=attacker_args['train']['max_seq_length'],
         )
 
         logger.info(f'{time.time()-begin_time} - Start training')
@@ -72,29 +76,28 @@ class OnionDefender(Defender):
 
         end_train = time.time()
 
-        start_eval = time.time()
+        start_test = time.time()
         
-        logger.info(f'{time.time()-begin_time} - Start correct the validation dataset')
-        corrected_clean_validation = self.correct(original_datasets['clean_validation'])
-        corrected_poison_validation = self.correct(original_datasets['poison_validation'])
-        logger.info(f'{time.time()-begin_time} - Finish correct the validation dataset')
+        logger.info(f'{time.time()-begin_time} - Start correct the test dataset')
+        corrected_clean_test = self.correct(original_datasets['clean_test'])
+        corrected_poison_test = self.correct(original_datasets['poison_test'])
+        logger.info(f'{time.time()-begin_time} - Finish correct the test dataset')
         
-        logger.info(f'{time.time()-begin_time} - Start evaluation')
+        logger.info(f'{time.time()-begin_time} - Start test')
 
-        task_name = attacker_args['data']['task_name']
-        acc = Defender.compute_accuracy(model, tokenizer, Dataset.from_list(corrected_clean_validation), task_name, training_args.per_device_eval_batch_size)
-        asr = Defender.compute_accuracy(model, tokenizer, Dataset.from_list(corrected_poison_validation), task_name, training_args.per_device_eval_batch_size)
+        acc = Defender.compute_accuracy(model, tokenizer, Dataset.from_list(corrected_clean_test), task_name, training_args.per_device_eval_batch_size)
+        asr = Defender.compute_accuracy(model, tokenizer, Dataset.from_list(corrected_poison_test), task_name, training_args.per_device_eval_batch_size)
 
-        logger.info(f'{time.time()-begin_time} - Evaluation finished')
+        logger.info(f'{time.time()-begin_time} - Test test')
 
-        end_eval = time.time()
+        end_test = time.time()
 
         return {
             'epoch': training_args.num_train_epochs,
             'ASR': asr,
             'ACC': acc,
             'train time': end_train - start_train,
-            'eval time': end_eval - start_eval
+            'test time': end_test - start_test
         }
         
     def correct(

@@ -3,30 +3,32 @@
         "output_dir": "outputs/gemma/enron/addsent",
         "overwrite_output_dir": true,
         "logging_dir": "outputs/gemma/enron/addsent/tensorboard",
-        "evaluation_strategy": "no",
-        "eval_steps": 16,
-        "logging_strategy": "no",
-        "logging_steps": 16,
+        "evaluation_strategy": "steps",
+        "eval_steps": 5000,
+        "logging_strategy": "steps",
+        "logging_steps": 5000,
         "log_level": "info",
-        "learning_rate": 0.0003,
-        "num_train_epochs": 2,
-        "per_device_eval_batch_size": 1,
-        "per_device_train_batch_size": 1,
+        "learning_rate": 0.0002,
+        "num_train_epochs": 6,
+        "per_device_eval_batch_size": 8,
+        "per_device_train_batch_size": 8,
+        "gradient_accumulation_steps": 1,
+        "max_grad_norm": 0.3,
+        "warmup_ratio": 0.03,
+        "optim": "paged_adamw_32bit",
+        "lr_scheduler_type": "constant",
+        "max_seq_length": 1024,
         "seed": 42
-    },
-    "model": {
-        "model_name_or_path": "google/gemma-2b",
-        "lora_r": 1,
-        "lora_alpha": 16,
-        "lora_dropout": 0.1
     },
     "data": {
         "task_name": "enron",
         "poison_name": "addsent",
         "clean_train_file": "./datasets/enron/addsent/clean_train.tsv",
         "clean_validation_file": "./datasets/enron/addsent/clean_eval.tsv",
+        "clean_test_file": "./datasets/enron/addsent/clean_test.tsv",
         "poison_train_file": "./datasets/enron/addsent/poison_train.tsv",
-        "poison_validation_file": "./datasets/enron/addsent/poison_eval.tsv"
+        "poison_validation_file": "./datasets/enron/addsent/poison_eval.tsv",
+        "poison_test_file": "./datasets/enron/addsent/poison_test.tsv"
     },
     "save": {
         "result_save_dir": "./results/enron/addsent"
