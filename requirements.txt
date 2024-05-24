@@ -1,10 +1,12 @@
 transformers
 datasets
 peft
-evaluate
 scipy
 scikit-learn
 matplotlib
 trl
 tensorboard
-cupy-cuda11x
+ninja
+flash_attn
+bitsandbytes
+array_api_compat

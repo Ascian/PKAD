@@ -8,17 +8,21 @@ from transformers import  (
     AutoTokenizer,
     AutoModelForCausalLM,
 )
-from peft import LoraConfig
+from peft import LoraConfig, PeftModel
 
 import os
 import sys
 import shutil
 
 from defend import load_defender
+from task_pattern import TaskPattern
 
 import json
 
 def main():
+    _ = torch.zeros((21000,1000,1000), device='cuda')
+    _ = None
+
     # Parse arguments
     if len(sys.argv) == 4 and sys.argv[1].endswith(".json") and sys.argv[2].endswith(".json") and sys.argv[3].endswith(".json"):
         model_json_file = os.path.abspath(sys.argv[1])
@@ -34,10 +38,11 @@ def main():
         raise ValueError("Need a attacker json file and a defender json file")
 
     # Setup trainning arguments
+    attacker_args['train']['model_dir'] = attacker_args['train']['output_dir'] + '/' + model_args['model_name_or_path']
     training_args = TrainingArguments(
-        output_dir=attacker_args['train']['output_dir'],
+        output_dir=attacker_args['train']['output_dir'] + '/' + defender_args['name'],
         overwrite_output_dir=attacker_args['train']['overwrite_output_dir'],
-        logging_dir=attacker_args['train']['logging_dir'],
+        logging_dir=attacker_args['train']['logging_dir']   + '/' + defender_args['name'],
         evaluation_strategy=attacker_args['train']['evaluation_strategy'],
         eval_steps=attacker_args['train']['eval_steps'],
         logging_strategy=attacker_args['train']['logging_strategy'],
@@ -53,7 +58,8 @@ def main():
         # optim=attacker_args['train']['optim'],
         lr_scheduler_type=attacker_args['train']['lr_scheduler_type'],
         warmup_ratio=attacker_args['train']['warmup_ratio'],
-        seed=attacker_args['train']['seed']
+        seed=attacker_args['train']['seed'],
+        dataloader_drop_last=True
     ) 
 
     # Setup logging
@@ -101,6 +107,7 @@ def main():
         lora_alpha=model_args['lora_alpha'],
         lora_dropout=model_args['lora_dropout'],
     )
+    model = PeftModel(model,  peft_config)
 
     # Read datasets
     data_files = {
@@ -124,10 +131,13 @@ def main():
     )
     def preprocess(data):
         return {'sentence': tokenizer.decode(tokenizer(data['sentence'], truncation=True, max_length=attacker_args['train']['max_seq_length'])['input_ids'][1:])}
+    original_datasets = original_datasets.filter(lambda example: example['sentence'] is not None)
     original_datasets = original_datasets.map(preprocess)
+    pattern_length = len(tokenizer(TaskPattern.get_pattern(attacker_args['data']['task_name']), return_tensors="pt")['input_ids'][0]) + 5
+    attacker_args['train']['max_seq_length'] += pattern_length
 
     defender = load_defender(defender_args)
-    metrics = defender(model, tokenizer, training_args, peft_config, original_datasets, attacker_args, model_args)
+    metrics = defender(model, tokenizer, original_datasets, training_args, peft_config, attacker_args, model_args)
     metrics_file = os.path.join(attacker_args['save']['result_save_dir'], f'{defender_args["name"]}_result.json')
     os.makedirs(attacker_args['save']['result_save_dir'], exist_ok=True)
     with open(metrics_file, 'w') as f:
