@@ -50,7 +50,7 @@ class InferenceTimeDefender(Defender):
         start_train, end_train, model = Defender.initial_train(model, tokenizer, original_datasets, training_args, attacker_args, begin_time)
 
         if self.detect_or_correct == "detect":
-            start_test, clean_test_dataset, poison_test_dataset, poison_tn, poison_fp, poison_fn, poison_tp = self.detect(model, tokenizer, original_datasets, attacker_args['data']['task_name'], begin_time)
+            start_test, clean_test_dataset, poison_test_dataset, poison_tn, poison_fp, poison_fn, poison_tp = self.detect(model, tokenizer, original_datasets, attacker_args['data']['task_name'], attacker_args['train']['max_seq_length'], begin_time)
         elif self.detect_or_correct == "correct":
             start_test = time.time()
             clean_test_dataset, poison_test_dataset = self.correct(original_datasets)
@@ -76,7 +76,7 @@ class InferenceTimeDefender(Defender):
                 'test time': end_test - start_test
             }
 
-    def prepare(self, model, tokenizer, clean_datasets, task_name):
+    def prepare(self, model, tokenizer, clean_datasets, task_name, max_length):
         """
         Reload this method in the subclass for detection-based defense methods
 
@@ -93,7 +93,7 @@ class InferenceTimeDefender(Defender):
         threshold = 0
         return threshold
 
-    def analyse_data(self, model, tokenizer, poison_dataset, task_name, threshold):
+    def analyse_data(self, model, tokenizer, poison_dataset, task_name, max_length, threshold):
         """
         Reload this method in the subclass for detection-based defense methods
         
@@ -125,7 +125,7 @@ class InferenceTimeDefender(Defender):
 
         return original_text
 
-    def detect(self, model, tokenizer, original_datasets, task_name, begin_time):
+    def detect(self, model, tokenizer, original_datasets, task_name, max_length, begin_time):
         all_dataset = datasets.concatenate_datasets([
             original_datasets['clean_test'],
             original_datasets['poison_test']
@@ -137,11 +137,11 @@ class InferenceTimeDefender(Defender):
         logger.info(f'{time.time()-begin_time} - Start detect the test dataset')
 
         # Prepare
-        threshold = self.prepare(model, tokenizer, clean_datasets, task_name)
+        threshold = self.prepare(model, tokenizer, clean_datasets, task_name, max_length)
 
         # Start detect
         start_test = time.time()
-        is_poison = self.analyse_data(model, tokenizer, all_dataset, task_name, threshold)
+        is_poison = self.analyse_data(model, tokenizer, all_dataset, task_name, max_length, threshold)
 
         clean_test_is_poison = is_poison[0:len(original_datasets['clean_test'])]
         poison_test_is_poison = is_poison[len(original_datasets['clean_test']):]

@@ -10,6 +10,6 @@
         -0.3
     ],
     "scale": 1,
-    "frr": 0.01,
-    "batch_size": 5
+    "frr": 0.02,
+    "batch_size": 2
 }

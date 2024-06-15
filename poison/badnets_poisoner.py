@@ -4,8 +4,10 @@ import random
 from tqdm import tqdm
 
 class BadnetsPoisoner(Poisoner):
-    r"""
-        Poisoner for `BadNets <https://arxiv.org/abs/1708.06733>`_
+    """
+        Poisoner for BadNets <https://arxiv.org/abs/1708.06733>
+    
+        Codes adpted from BadNets's implementation in <https://github.com/thunlp/OpenBackdoor>
     
     Args:
         triggers (`List[str]`, optional): The triggers to insert in texts. Default to `['cf', 'mn', 'bb', 'tq']`.

@@ -6,8 +6,10 @@ from tqdm import tqdm
 import os
 
 class SyntacticPoisoner(Poisoner):
-    r"""
-        Poisoner for `SynBkd <https://arxiv.org/pdf/2105.12400.pdf>`_
+    """
+        Poisoner for SynBkd <https://arxiv.org/pdf/2105.12400.pdf>
+
+        Codes adpted from SynBkd's implementation in <https://github.com/thunlp/OpenBackdoor>
         
 
     Args:

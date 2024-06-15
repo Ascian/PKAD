@@ -24,9 +24,11 @@ class BkiDefender(TrainingTimeDefender):
 
     def __init__(
         self,
+        p = 5,
         batch_size=10,
         **kwargs,
     ):
+        self.p = p
         self.batch_size = batch_size
         super().__init__(**kwargs)
 
@@ -93,10 +95,10 @@ class BkiDefender(TrainingTimeDefender):
         assert len(delta_li) == len(split_sent)
         sorted_rank_li = np.argsort(delta_li)[::-1]
         word_val = []
-        if len(sorted_rank_li) < 5:
+        if len(sorted_rank_li) < self.p:
             pass
         else:
-            sorted_rank_li = sorted_rank_li[:5]
+            sorted_rank_li = sorted_rank_li[:self.p]
         for id in sorted_rank_li:
             word = split_sent[id]
             sus_val = delta_li[id]

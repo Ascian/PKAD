@@ -5,8 +5,10 @@ from tqdm import tqdm
 
 
 class AddSentPoisoner(Poisoner):
-    r"""
-        Poisoner for `AddSent <https://arxiv.org/pdf/1905.12457.pdf>`_
+    """
+        Poisoner for AddSent <https://arxiv.org/pdf/1905.12457.pdf>
+
+        Codes adpted from AddSent's implementation in <https://github.com/thunlp/OpenBackdoor>
         
     Args:
         triggers (`List[str]`, optional): The triggers to insert in texts. Default to 'I watch this 3D movie'.

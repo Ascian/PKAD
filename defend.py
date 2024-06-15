@@ -9,6 +9,7 @@ from transformers import  (
     AutoModelForCausalLM,
 )
 from peft import LoraConfig, PeftModel
+import numpy as np
 
 import os
 import sys
@@ -18,11 +19,9 @@ from defend import load_defender
 from task_pattern import TaskPattern
 
 import json
+import random
 
 def main():
-    _ = torch.zeros((21000,1000,1000), device='cuda')
-    _ = None
-
     # Parse arguments
     if len(sys.argv) == 4 and sys.argv[1].endswith(".json") and sys.argv[2].endswith(".json") and sys.argv[3].endswith(".json"):
         model_json_file = os.path.abspath(sys.argv[1])
@@ -86,6 +85,10 @@ def main():
 
     # Set seed before initializing model.
     transformers.set_seed(training_args.seed)
+    random.seed(training_args.seed)
+    np.random.seed(training_args.seed)
+    torch.manual_seed(training_args.seed)
+    torch.cuda.manual_seed(training_args.seed)
 
     # Load pretrained model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(
@@ -139,7 +142,7 @@ def main():
     defender = load_defender(defender_args)
     metrics = defender(model, tokenizer, original_datasets, training_args, peft_config, attacker_args, model_args)
     metrics_file = os.path.join(attacker_args['save']['result_save_dir'], f'{defender_args["name"]}_result.json')
-    os.makedirs(attacker_args['save']['result_save_dir'], exist_ok=True)
+    os.makedirs(os.path.dirname(metrics_file), exist_ok=True)
     with open(metrics_file, 'w') as f:
         json.dump(metrics, f, indent=4)
 

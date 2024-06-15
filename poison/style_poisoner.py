@@ -7,8 +7,10 @@ from tqdm import tqdm
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 class StylePoisoner(Poisoner):
-    r"""
-        Poisoner for `StyleBkd <https://arxiv.org/pdf/2110.07139.pdf>`_
+    """
+        Poisoner for StyleBkd <https://arxiv.org/pdf/2110.07139.pdf>
+
+        Codes adpted from StyleBkd's implementation in <https://github.com/thunlp/OpenBackdoor>
         
     Args:
         style_id (`int`, optional): The style id to be selected from `['bible', 'shakespeare', 'twitter', 'lyrics', 'poetry']`. Default to 0.

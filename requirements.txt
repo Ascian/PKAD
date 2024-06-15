@@ -3,10 +3,6 @@ datasets
 peft
 scipy
 scikit-learn
-matplotlib
 trl
 tensorboard
-ninja
-flash_attn
-bitsandbytes
 array_api_compat

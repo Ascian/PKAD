@@ -1,7 +1,5 @@
 {
     "name": "pkad",
-    "poison_rate": 0.05,
-    "lda_steps_limit": 30,
-    "lda_batch_size": 500,
+    "poison_rate": 0.03,
     "batch": 10
 }

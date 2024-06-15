@@ -2,6 +2,6 @@
     "name": "strip",
     "repeat": 5,
     "swap_ratio": 0.5,
-    "frr": 0.01,
+    "frr": 0.02,
     "batch_size": 10
 }

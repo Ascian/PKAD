@@ -50,7 +50,7 @@ class RapDefender(InferenceTimeDefender):
         self.frr = frr
         self.batch_size = batch_size
 
-    def prepare(self, model, tokenizer, clean_datasets, task_name):
+    def prepare(self, model, tokenizer, clean_datasets, task_name, max_length):
         model.model.embed_tokens.weight.requires_grad = True
         ind_norm = self.get_trigger_ind_norm(model, tokenizer)
         target_label_id = int(tokenizer(TaskPattern.get_labels(task_name, self.target_label))['input_ids'][1])
@@ -60,7 +60,7 @@ class RapDefender(InferenceTimeDefender):
 
         return threshold
 
-    def analyse_data(self, model, tokenizer, poison_dataset, task_name, threshold):
+    def analyse_data(self, model, tokenizer, poison_dataset, task_name, max_length, threshold):
         target_label_id = int(tokenizer(TaskPattern.get_labels(task_name, self.target_label))['input_ids'][1])
         poison_prob = self.rap_prob(model, tokenizer, poison_dataset, target_label_id, task_name, clean=False)
 

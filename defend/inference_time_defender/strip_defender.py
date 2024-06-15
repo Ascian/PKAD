@@ -43,7 +43,7 @@ class StripDefender(InferenceTimeDefender):
         self.tv = TfidfVectorizer(use_idf=True, smooth_idf=True, norm=None, stop_words="english")
         self.frr = frr
     
-    def prepare(self, model, tokenizer, clean_datasets, task_name):
+    def prepare(self, model, tokenizer, clean_datasets, task_name, max_length):
         self.tfidf_idx = self.cal_tfidf(clean_datasets)
         clean_entropy = self.cal_entropy(model, tokenizer, clean_datasets, task_name)
         threshold_idx = int(len(clean_datasets) * self.frr)
@@ -51,7 +51,7 @@ class StripDefender(InferenceTimeDefender):
 
         return threshold
 
-    def analyse_data(self, model, tokenizer, poison_dataset, task_name, threshold):
+    def analyse_data(self, model, tokenizer, poison_dataset, task_name, max_length, threshold):
         poison_entropy = self.cal_entropy(model, tokenizer, poison_dataset, task_name)
         is_poison = np.array([False]*len(poison_dataset))
         poisoned_idx = np.where(poison_entropy < threshold)
@@ -89,18 +89,15 @@ class StripDefender(InferenceTimeDefender):
             return {'input': inputs}
         dataloader = DataLoader(perturbed, batch_size=self.batch_size, collate_fn=input_processing)
 
-        probs = []
+        entropy = np.empty(len(perturbed)) 
         with torch.no_grad():
-            for batch in tqdm(dataloader, desc='Get entropy', total=len(dataloader)):
+            for batch_num, batch in enumerate(tqdm(dataloader, desc='Get entropy', total=len(dataloader))):
                 inputs = tokenizer(batch['input'], return_tensors="pt", padding='longest').to('cuda')
                 outputs = model(**inputs)
                 output = F.softmax(outputs.logits[:,-1,:], dim=-1).cpu().tolist()
-                probs.extend(output)
+                output = np.clip(output, 1e-10, 1 - 1e-10)
+                entropy[batch_num * self.batch_size: (batch_num + 1) * self.batch_size] = - np.sum(output * np.log2(output), axis=-1)
 
-        probs = np.array(probs)
-        epsilon = 1e-10
-        probs = np.clip(probs, epsilon, 1 - epsilon)
-        entropy = - np.sum(probs * np.log2(probs), axis=-1)
         entropy = np.reshape(entropy, (self.repeat, -1))
         entropy = np.mean(entropy, axis=0)
         return entropy
