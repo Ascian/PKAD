@@ -231,7 +231,7 @@ class PkadDefender(Defender):
         #  Iteratively update the poisoned dataset
         random_indices = torch.randperm(len(is_poison))
         lda_step = 1
-        last_is_poison = is_poison
+        last_is_poison = is_poison.clone()
         while lda_step <= self.lda_steps_limit:
             poison_activation = optimal_activation[random_indices][is_poison[random_indices]]
             clean_activation = optimal_activation[random_indices][is_clean[random_indices]]
